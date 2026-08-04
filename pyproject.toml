@@ -1,0 +1,18 @@
+[tool.ruff]
+line-length = 80
+src = ["src"]
+
+[tool.ruff.lint]
+# Enable the entire Ruff rule set; suppress only mutually-incompatible rules.
+select = ["ALL"]
+ignore = [
+    "D203",  # conflicts with D211 — keep D211 (no blank line before class docstring)
+    "D213",  # conflicts with D212 — keep D212 (summary on first line)
+]
+
+[tool.mypy]
+# No explicit python_version: mypy checks against the running interpreter.
+# (Recent mypy requires >= 3.10, and bundled numpy stubs use 3.12+ syntax.)
+files = ["src"]
+ignore_missing_imports = false
+warn_unused_ignores = true
