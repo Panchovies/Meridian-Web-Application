@@ -9,9 +9,31 @@ This file defines a simple health check endpoint that returns:
 import os
 from datetime import datetime, timezone
 
-from flask import Flask, jsonify
+import requests
+from flask import Flask, jsonify, request
 
 app = Flask(__name__)
+
+@app.route("/news")
+def get_news() -> tuple:
+    """Fetch news articles based on query parameters.
+
+    Query Parameters:
+        q: The search query, either a company or ticker symbol.
+    """
+    query = request.args.get("q", "").strip()
+    if not query:
+        return jsonify({"Error": "Missing required query parameter 'q'"}), 400
+
+    api_request_url = f"https://newsapi.org/v2/top-headlines?apiKey=a0b43419dc1c49a8978b805be0c52953&q={query}&country=us&pageSize=5"
+    try:
+        response = requests.get(api_request_url, timeout=5)
+        response.raise_for_status()
+
+    except requests.RequestException as e:
+        return jsonify({"Error": f"Failed to fetch news articles: {e!s}"}), 500
+
+    return jsonify(response), 200
 
 @app.route("/health")
 def health() -> tuple:
