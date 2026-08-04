@@ -15,7 +15,6 @@ def test_health_status_code() -> None:
     """Test that the /health endpoint returns a status code of 200."""
     client = app.test_client()
     response = client.get("/health")
-    response = client.get("/health")
     assert response.status_code == HTTP_OK
 
 def test_health_response_structure() -> None:
