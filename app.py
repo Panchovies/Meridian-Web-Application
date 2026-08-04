@@ -28,13 +28,19 @@ def get_news() -> tuple:
 
     api_request_url = f"https://newsapi.org/v2/top-headlines?apiKey=a0b43419dc1c49a8978b805be0c52953&q={query}&country=us&pageSize=5"
     try:
-        response = requests.get(api_request_url, timeout=5)
-        response.raise_for_status()
+        api_response = requests.get(api_request_url, timeout=5)
+        api_response.raise_for_status()
+        response = api_response.json()
+        if response.get("status") != "ok":
+            return jsonify({"Error": "Failed to fetch news articles"}), 500
+        if response.get("totalResults", 0) == 0:
+            return jsonify({"Error":
+                            f"No news articles found for query: {query}"}), 404
 
     except requests.RequestException as e:
         return jsonify({"Error": f"Failed to fetch news articles: {e!s}"}), 500
 
-    return jsonify(response.json()), 200
+    return jsonify(response.get("articles", [])), 200
 
 @app.route("/health")
 def health() -> tuple:
