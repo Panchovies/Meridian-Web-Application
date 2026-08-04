@@ -20,6 +20,7 @@ def get_news() -> tuple:
 
     Query Parameters:
         q: The search query, either a company or ticker symbol.
+    Uses api call from https://newsapi.org/
     """
     query = request.args.get("q", "").strip()
     if not query:
@@ -33,7 +34,7 @@ def get_news() -> tuple:
     except requests.RequestException as e:
         return jsonify({"Error": f"Failed to fetch news articles: {e!s}"}), 500
 
-    return jsonify(response), 200
+    return jsonify(response.json()), 200
 
 @app.route("/health")
 def health() -> tuple:
