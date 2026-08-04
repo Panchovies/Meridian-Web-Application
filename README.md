@@ -25,6 +25,7 @@ Example response:
 
 - Python 3.14 (or any Python 3.x)
 - pip
+- Docker Desktop
 
 ## Setup
 
@@ -49,13 +50,39 @@ Start the application:
 python app.py
 ```
 
-The server will start at `http://127.0.0.1:5000`. You can check the endpoint with:
+The server will start at `http://localhost:5000`. You can check the endpoint with:
 
 ```bash
-curl http://127.0.0.1:5000/health
+curl http://localhost:5000/health
 ```
 
 or by visiting that URL in a browser.
+
+## Running on Docker
+
+With Docker Desktop running in the background:
+
+Build the image:
+
+```bash
+docker build -t meridian-application .
+```
+
+Run the container:
+
+```bash
+docker run -p 5000:5000 meridian-application
+```
+
+For debug mode, add this flag:
+
+```bash
+-e ENV=dev
+```
+
+### Troubleshooting:
+
+It is possible that if you are on a Mac, port 5000 will be in use. In that case, try using port 8080 or any other free port.
 
 ## Running tests
 
