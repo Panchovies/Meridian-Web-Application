@@ -82,7 +82,13 @@ For debug mode, add this flag:
 
 ### Troubleshooting:
 
-It is possible that if you are on a Mac, port 5000 will be in use. In that case, try using port 8080 or any other free port.
+It is possible that if you are on a Mac, port 5000 will be in use. This will result in an "address is already in use" error when running the container. In that case, try using port 8080 or any other free port. Just switch the port number on the left-side of the colon to any number in the range of (1024-65535).
+
+```bash
+docker run -p <Any Free Port>:5000 meridian-application
+```
+
+The application can be accessed at `http://localhost:5000`, however if you choose to change the port, you must change the port number in the URL as well.
 
 ## Running tests
 
@@ -94,3 +100,7 @@ pytest -v
 
 This runs the test suite, which checks that `/health` returns a 200 status
 code and that the response body contains the expected fields.
+
+## Running in Python vs Docker
+
+The main difference in running an application in Python directly vs using a container is the consistency and scalability. When runnning in Python directly, a changes in between machines and enviornments can change the way an application runs and interacts with the system. When using a container, the enviornment, dependencies, and versions of software all remain the same, alowing for simpler testing and significantly less setup. Containers also allow for scalability as multiple instances of containers can be run simultaniously allowing for stress testing and parralel work. This is perfect for Meridian, who has multiple people testing and deploying, so making sure enviornments stay consistent saves time and resources.
