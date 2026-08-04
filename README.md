@@ -1,9 +1,6 @@
-# Health Check Service
+# Meridian Capital Markets Python Web Application
 
-A minimal Flask web application that exposes a single `/health` endpoint,
-used to verify the service is running and responsive.
-
-## What it does
+### `/health`
 
 The `/health` endpoint responds to GET requests with a JSON object containing:
 
@@ -19,6 +16,40 @@ Example response:
   "timestamp": "2026-08-03T14:32:10.123456+00:00",
   "message": "Service is healthy"
 }
+```
+
+### `/news`
+
+The `/news` endpoint responds to GET requests with news articles matching a given company or ticker symbol, sourced from [NewsAPI](https://newsapi.org/).
+
+**Query Parameters:**
+
+- `q` (required) — the search query, either a company name or ticker symbol
+
+**Responses:**
+
+- `200` — returns a JSON array of up to 5 matching articles
+- `400` — missing required query parameter `q`
+- `404` — no articles found for the given query
+- `500` — the upstream news API request failed or returned an unexpected status
+
+Example request:
+
+```bash
+curl "http://localhost:5000/news?q=AAPL"
+```
+
+Example response:
+
+```json
+[
+  {
+    "title": "Apple announces...",
+    "description": "...",
+    "url": "https://...",
+    "publishedAt": "2026-08-03T12:00:00Z"
+  }
+]
 ```
 
 ## Requirements
