@@ -15,9 +15,8 @@ def test_health_status_code() -> None:
     """Test that the /health endpoint returns a status code of 200."""
     client = app.test_client()
     response = client.get("/health")
-    if response.status_code != HTTP_OK:
-        error = f"Expected status code {HTTP_OK}, got {response.status_code}"
-        raise ValueError(error)
+    response = client.get("/health")
+    assert response.status_code == HTTP_OK
 
 def test_health_response_structure() -> None:
     """Test that the /health endpoint returns the expected response structure.
@@ -31,15 +30,7 @@ def test_health_response_structure() -> None:
     response = client.get("/health")
     data = response.get_json()
 
-    if "status" not in data:
-        error = "Response JSON does not contain 'status' key"
-        raise ValueError(error)
-    if "timestamp" not in data:
-        error = "Response JSON does not contain 'timestamp' key"
-        raise ValueError(error)
-    if "message" not in data:
-        error = "Response JSON does not contain 'message' key"
-        raise ValueError(error)
-    if data["status"] != "ok":
-        error = f"Expected status 'ok', got {data['status']}"
-        raise ValueError(error)
+    assert "status" in data
+    assert "timestamp" in data
+    assert "message" in data
+    assert data["status"] == "ok"
