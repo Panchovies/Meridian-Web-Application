@@ -1,0 +1,36 @@
+stages:
+  - lint
+  - test
+  - build
+
+lint:
+  stage: lint
+  image: python:3.14
+  script:
+    - pip install ruff mypy
+    - ruff check .
+    - mypy .
+  only:
+    - merge_requests
+    - main
+
+test:
+  stage: test
+  image: python:3.14
+  script:
+    - pip install pytest
+    - pytest
+  only:
+    - merge_requests
+    - main
+
+build:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - docker compose build
+  only:
+    - merge_requests
+    - main
