@@ -1,2 +1,28 @@
-hello.py
-tickerAPIKey.txt
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Environments
+.venv/
+venv/
+.env
+
+# Tool caches
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# uv — commit uv.lock once the project has real dependencies
+# uv.lock
+
+# Editors
+.idea/
+.vscode/
+*.swp
+\#*\#
+node_modules/

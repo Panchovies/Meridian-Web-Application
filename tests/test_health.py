@@ -1,21 +1,21 @@
-# Copyright (c) 2026 Francisco Zenklusen. All rights reserved.
+# Copyright (c) 2026 Meridian Capital Markets
 """Unit tests for the health check endpoint of the Flask web service.
 
 These tests verify that the /health endpoint returns:
     a status code of 200
     a JSON response containing the expected keys: status, timestamp, and message
 """
-from app import app
-
-# HTTP status codes
-HTTP_OK = 200
+from src.app import app
+from src.constants import (
+    HTTP_STATUS_OK,
+)
 
 
 def test_health_status_code() -> None:
     """Test that the /health endpoint returns a status code of 200."""
     client = app.test_client()
     response = client.get("/health")
-    assert response.status_code == HTTP_OK
+    assert response.status_code == HTTP_STATUS_OK
 
 def test_health_response_structure() -> None:
     """Test that the /health endpoint returns the expected response structure.
