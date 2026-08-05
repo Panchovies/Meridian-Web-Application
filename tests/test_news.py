@@ -103,7 +103,7 @@ def test_news_api_non_ok_status() -> None:
          patch("app.requests.get", return_value=mock_response):
         response = client.get("/news?q=apple")
 
-    assert response.status_code == HTTP_STATUS_API_ERROR
+    assert response.status_code == HTTP_STATUS_INTERNAL_SERVER_ERROR
     assert response.get_json() == {"Error": "Failed to fetch news articles"}
 
 def test_news_no_articles_found() -> None:
