@@ -36,7 +36,7 @@ The `/news` endpoint responds to GET requests with news articles matching a give
 Example request:
 
 ```bash
-curl "http://localhost:5000/news?q=AAPL"
+curl "http://localhost:5000/news?q=Apple"
 ```
 
 Example response:
