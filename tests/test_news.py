@@ -12,6 +12,12 @@ from unittest.mock import Mock, patch
 
 import requests
 from app import app
+from constants import (
+    HTTP_STATUS_API_ERROR,
+    HTTP_STATUS_BAD_REQUEST,
+    HTTP_STATUS_INTERNAL_SERVER_ERROR,
+    HTTP_STATUS_OK,
+)
 
 
 def test_news_status_code() -> None:
@@ -29,7 +35,7 @@ def test_news_status_code() -> None:
     with patch("app.requests.get", return_value=mock_response):
         response = client.get("/news?q=apple")
 
-    assert response.status_code == 200
+    assert response.status_code == HTTP_STATUS_OK
 
 def test_news_missing_query_parameter() -> None:
     """Verify that a request without the 'q' parameter returns HTTP 400."""
@@ -44,7 +50,7 @@ def test_news_missing_query_parameter() -> None:
 
     with patch("app.requests.get", return_value=mock_response):
         response = client.get("/news")
-    assert response.status_code == 400
+    assert response.status_code == HTTP_STATUS_BAD_REQUEST
     assert response.get_json() == {"Error":
                                    "Missing required query parameter 'q'"}
 
@@ -61,7 +67,7 @@ def test_news_missing_query_string() -> None:
 
     with patch("app.requests.get", return_value=mock_response):
         response = client.get("/news?q=%20")
-    assert response.status_code == 400
+    assert response.status_code == HTTP_STATUS_BAD_REQUEST
     assert response.get_json() == {"Error":
                                    "Missing required query parameter 'q'"}
 
@@ -73,7 +79,7 @@ def test_news_api_failure() -> None:
                requests.RequestException("API failure")):
         response = client.get("/news?q=apple")
 
-    assert response.status_code == 500
+    assert response.status_code == HTTP_STATUS_INTERNAL_SERVER_ERROR
     assert "Failed to fetch news articles" in response.get_json()["Error"]
 
 def test_news_api_non_ok_status() -> None:
@@ -91,7 +97,7 @@ def test_news_api_non_ok_status() -> None:
     with patch("app.requests.get", return_value=mock_response):
         response = client.get("/news?q=apple")
 
-    assert response.status_code == 500
+    assert response.status_code == HTTP_STATUS_INTERNAL_SERVER_ERROR
     assert response.get_json() == {"Error": "Failed to fetch news articles"}
 
 def test_news_no_articles_found() -> None:
@@ -109,6 +115,6 @@ def test_news_no_articles_found() -> None:
     with patch("app.requests.get", return_value=mock_response):
         response = client.get("/news?q=nonexistentcompany")
 
-    assert response.status_code == 404
+    assert response.status_code == HTTP_STATUS_API_ERROR
     assert response.get_json() == {"Error": "No news articles "
         "found for query: nonexistentcompany"}
