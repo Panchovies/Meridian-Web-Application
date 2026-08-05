@@ -10,6 +10,13 @@ import os
 from datetime import datetime, timezone
 
 import requests
+from constants import (
+    DEFAULT_PORT,
+    HTTP_STATUS_API_ERROR,
+    HTTP_STATUS_BAD_REQUEST,
+    HTTP_STATUS_INTERNAL_SERVER_ERROR,
+    HTTP_STATUS_OK,
+)
 from flask import Flask, jsonify, request
 
 app = Flask(__name__)
@@ -24,7 +31,8 @@ def get_news() -> tuple:
     """
     query = request.args.get("q", "").strip()
     if not query:
-        return jsonify({"Error": "Missing required query parameter 'q'"}), 400
+        return (jsonify({"Error": "Missing required query parameter 'q'"}),
+                HTTP_STATUS_BAD_REQUEST)
 
     api_request_url = f"https://newsapi.org/v2/top-headlines?apiKey=a0b43419dc1c49a8978b805be0c52953&q={query}&country=us&pageSize=5"
     try:
@@ -32,15 +40,18 @@ def get_news() -> tuple:
         api_response.raise_for_status()
         response = api_response.json()
         if response.get("status") != "ok":
-            return jsonify({"Error": "Failed to fetch news articles"}), 500
+            return (jsonify({"Error": "Failed to fetch news articles"}),
+                    HTTP_STATUS_API_ERROR)
         if response.get("totalResults", 0) == 0:
-            return jsonify({"Error":
-                            f"No news articles found for query: {query}"}), 404
+            return (jsonify({"Error":
+                             f"No news articles found for query: {query}"}),
+                             HTTP_STATUS_API_ERROR)
 
     except requests.RequestException as e:
-        return jsonify({"Error": f"Failed to fetch news articles: {e!s}"}), 500
+        return (jsonify({"Error": f"Failed to fetch news articles: {e!s}"}),
+                HTTP_STATUS_INTERNAL_SERVER_ERROR)
 
-    return jsonify(response.get("articles", [])), 200
+    return jsonify(response.get("articles", [])), HTTP_STATUS_OK
 
 @app.route("/health")
 def health() -> tuple:
@@ -56,7 +67,8 @@ def health() -> tuple:
         "status": "ok",
         "timestamp": date,
         "message": "Service is healthy and running.",
-    }), 200
+    }), HTTP_STATUS_OK
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=os.environ.get("ENV") == "dev")  # noqa: S104
+    app.run(host="0.0.0.0", port=DEFAULT_PORT, # noqa: S104
+            debug=os.environ.get("ENV") == "dev")
