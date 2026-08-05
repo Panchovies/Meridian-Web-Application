@@ -21,6 +21,7 @@ Example response:
 ### `/news`
 
 The `/news` endpoint responds to GET requests with news articles matching a given company or ticker symbol, sourced from [NewsAPI](https://newsapi.org/).
+Needs an API key to function. A free API key can be obtained from [NewsAPI](https://newsapi.org/).
 
 **Query Parameters:**
 
@@ -89,7 +90,7 @@ curl http://localhost:5000/health
 
 or by visiting that URL in a browser.
 
-## Running on Docker
+## Running with Docker
 
 With Docker Desktop running in the background:
 
@@ -120,6 +121,56 @@ docker run -p <Any Free Port>:5000 meridian-application
 ```
 
 The application can be accessed at `http://localhost:5000`, however if you choose to change the port, you must change the port number in the URL as well.
+
+## Running with Docker Compose
+
+This application can be run locally using Docker Compose. Docker Compose will build the Flask application container, configure the required environment variables, and expose the service on the configured port.
+
+### 1. Create the environment file (Optional: Only for /news and Debug Mode)
+
+Create a `.env` file in the root directory of the project
+
+Add the following environment variables:
+
+```env
+ENV=dev
+NEWS_API_KEY=your_news_api_key_here
+```
+
+- `ENV=dev` enables Flask debug mode for local development.
+- `NEWS_API_KEY` should contain your own API key from NewsAPI.
+Needs an API key to function. A free API key can be obtained from [NewsAPI](https://newsapi.org/).
+
+### 2. Build and start the application
+
+To build the Docker image and start the application, run:
+
+```bash
+docker compose up --build
+```
+
+If the Docker image has already been built and there are no changes to the Dockerfile, you can start the application with:
+
+```bash
+docker compose up
+```
+
+### 3. Access the API
+
+Once the container is running, the API will be available at:
+
+```text
+http://localhost:8080
+```
+This Docker Compose uses 8080 as the host port, you can change it in the .yaml file.
+
+### 4. Stop the application
+
+To stop and remove the running containers, run:
+
+```bash
+docker compose down
+```
 
 ## Running tests
 
