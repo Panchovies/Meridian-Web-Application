@@ -1,3 +1,32 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "delivery-service"
+version = "0.1.0"
+description = "Meridian Capital Markets delivery service — enterprise simulator"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Proprietary" }
+authors = [{ name = "Your Name", email = "you@example.com" }]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: Other/Proprietary License",
+    "Private :: Do Not Upload",
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "mypy>=1.8",
+    "pytest>=8.0",
+    "ruff>=0.6",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
 [tool.ruff]
 line-length = 80
 src = ["src"]
@@ -10,9 +39,39 @@ ignore = [
     "D213",  # conflicts with D212 — keep D212 (summary on first line)
 ]
 
+[tool.ruff.lint.flake8-copyright]
+# CPY001 is enforced: every source file carries the notice from LICENSE.
+notice-rgx = "(?i)Copyright \\(c\\) \\d{4} Meridian Capital Markets"
+
+[tool.ruff.lint.per-file-ignores]
+# Test code, wherever you keep it. Every layout in use across the cohort is
+# covered: a tests/ directory, test_*.py at the repository root, and *_test.py
+# sitting next to the code it exercises.
+#
+# S101 exists to keep `assert` out of production code, because `python -O`
+# strips assertions — so an assert used to validate an argument silently
+# disappears in an optimized build. That reasoning does not carry over to
+# tests. Tests are not run under -O, and pytest rewrites assert statements to
+# produce its failure reports, so replacing them with raised exceptions would
+# cost readability and give worse output for no safety gain.
+#
+# INP001 is ignored because test directories deliberately have no __init__.py.
+"tests/**" = ["INP001", "S101"]
+"test/**" = ["INP001", "S101"]
+"**/test_*.py" = ["INP001", "S101"]
+"**/*_test.py" = ["INP001", "S101"]
+"**/conftest.py" = ["INP001", "S101"]
+
 [tool.mypy]
-# No explicit python_version: mypy checks against the running interpreter.
-# (Recent mypy requires >= 3.10, and bundled numpy stubs use 3.12+ syntax.)
+# Pin the target so mypy checks the language level we actually support
+# (requires-python) instead of whatever interpreter happens to run it.
+python_version = "3.11"
 files = ["src"]
 ignore_missing_imports = false
 warn_unused_ignores = true
+
+[tool.pytest.ini_options]
+# Make src/ importable so `pytest` and `python -m pytest` behave identically.
+# Without this, bare `pytest` cannot import the package under a src layout.
+pythonpath = ["src"]
+testpaths = ["tests"]
