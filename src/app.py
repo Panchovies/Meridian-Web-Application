@@ -10,14 +10,15 @@ import os
 from datetime import datetime, timezone
 
 import requests
-from constants import (
+from flask import Flask, jsonify, request
+
+from .constants import (
     DEFAULT_PORT,
     HTTP_STATUS_API_ERROR,
     HTTP_STATUS_BAD_REQUEST,
     HTTP_STATUS_INTERNAL_SERVER_ERROR,
     HTTP_STATUS_OK,
 )
-from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 

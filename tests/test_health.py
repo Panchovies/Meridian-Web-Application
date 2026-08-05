@@ -5,8 +5,8 @@ These tests verify that the /health endpoint returns:
     a status code of 200
     a JSON response containing the expected keys: status, timestamp, and message
 """
-from app import app
-from constants import (
+from src.app import app
+from src.constants import (
     HTTP_STATUS_OK,
 )
 
