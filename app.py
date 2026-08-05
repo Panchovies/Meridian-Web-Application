@@ -47,7 +47,7 @@ def get_news() -> tuple:
         response = api_response.json()
         if response.get("status") != "ok":
             return (jsonify({"Error": "Failed to fetch news articles"}),
-                    HTTP_STATUS_API_ERROR)
+                    HTTP_STATUS_INTERNAL_SERVER_ERROR)
         if response.get("totalResults", 0) == 0:
             return (jsonify({"Error":
                              f"No news articles found for query: {query}"}),
