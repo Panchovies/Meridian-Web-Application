@@ -1,4 +1,4 @@
-# Copyright (c) 2026 Francisco Zenklusen. All rights reserved.
+# Copyright (c) 2026 Meridian Capital Markets
 """Constants for the Flask web service."""
 
 HTTP_STATUS_OK = 200

@@ -1,4 +1,4 @@
-# Copyright (c) 2026 Francisco Zenklusen. All rights reserved.
+# Copyright (c) 2026 Meridian Capital Markets
 """Main application file for the Flask web service.
 
 This file defines a simple health check endpoint that returns:
@@ -7,7 +7,7 @@ This file defines a simple health check endpoint that returns:
     a status code of 200, indicating the service is healthy
 """
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import requests
 from flask import Flask, jsonify, request
@@ -69,7 +69,7 @@ def health() -> tuple:
         a status message
         and a status code of 200
     """
-    date = datetime.now(timezone.utc).isoformat()
+    date = datetime.now(UTC).isoformat()
     return jsonify({
         "status": "ok",
         "timestamp": date,
