@@ -1,4 +1,4 @@
-# Copyright (c) 2026 Francisco Zenklusen. All rights reserved.
+# Copyright (c) 2026 Meridian Capital Markets
 """Unit tests for the health check endpoint of the Flask web service.
 
 These tests verify that the /health endpoint returns:

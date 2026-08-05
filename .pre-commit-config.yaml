@@ -1,0 +1,33 @@
+# Local enforcement of the same four checks CI runs. Install once with:
+#
+#     pre-commit install --install-hooks
+#     pre-commit install --hook-type commit-msg
+#
+# The second line is not optional: commitlint runs at the commit-msg stage and
+# is silently skipped without it.
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.1
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v2.3.0
+    hooks:
+      - id: mypy
+        # The hook runs in its own environment and cannot see the project's
+        # dependencies. List any package that ships type information here.
+        additional_dependencies: []
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
+
+  - repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
+    rev: v9.26.0
+    hooks:
+      - id: commitlint
+        stages: [commit-msg]
+        additional_dependencies: ["@commitlint/config-conventional"]
