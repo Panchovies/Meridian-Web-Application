@@ -23,6 +23,7 @@ ruff==0.16.1
 setuptools==83.0.0
 types-colorama==0.4.15.20260508
 types-pysocks==1.7.1.20260518
+types-requests==2.33.0.20260712
 types-simplejson==4.1.0.20260724
 typing-extensions==4.16.0
 urllib3==2.7.0
