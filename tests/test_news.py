@@ -8,6 +8,7 @@ These tests verify that the /news endpoint returns:
     as well as handling error cases such as missing query parameters
         or failed API requests.
 """
+import os
 from unittest.mock import Mock, patch
 
 import requests
@@ -32,7 +33,8 @@ def test_news_status_code() -> None:
         "articles": ["article1"],
     }
 
-    with patch("app.requests.get", return_value=mock_response):
+    with patch.dict(os.environ, {"NEWS_API_KEY": "test_key"}), \
+         patch("app.requests.get", return_value=mock_response):
         response = client.get("/news?q=apple")
 
     assert response.status_code == HTTP_STATUS_OK
@@ -48,7 +50,8 @@ def test_news_missing_query_parameter() -> None:
         "articles": ["article1"],
     }
 
-    with patch("app.requests.get", return_value=mock_response):
+    with patch.dict(os.environ, {"NEWS_API_KEY": "test_key"}), \
+         patch("app.requests.get", return_value=mock_response):
         response = client.get("/news")
     assert response.status_code == HTTP_STATUS_BAD_REQUEST
     assert response.get_json() == {"Error":
@@ -65,7 +68,8 @@ def test_news_missing_query_string() -> None:
         "articles": ["article1"],
     }
 
-    with patch("app.requests.get", return_value=mock_response):
+    with patch.dict(os.environ, {"NEWS_API_KEY": "test_key"}), \
+         patch("app.requests.get", return_value=mock_response):
         response = client.get("/news?q=%20")
     assert response.status_code == HTTP_STATUS_BAD_REQUEST
     assert response.get_json() == {"Error":
@@ -75,8 +79,9 @@ def test_news_api_failure() -> None:
     """Verify that a failed API request returns HTTP 500."""
     client = app.test_client()
 
-    with patch("app.requests.get", side_effect=
-               requests.RequestException("API failure")):
+    with patch.dict(os.environ, {"NEWS_API_KEY": "test_key"}), \
+         patch("app.requests.get",
+               side_effect=requests.RequestException("API failure")):
         response = client.get("/news?q=apple")
 
     assert response.status_code == HTTP_STATUS_INTERNAL_SERVER_ERROR
@@ -94,10 +99,11 @@ def test_news_api_non_ok_status() -> None:
         "message": "Your API key is invalid or incorrect.",
     }
 
-    with patch("app.requests.get", return_value=mock_response):
+    with patch.dict(os.environ, {"NEWS_API_KEY": "test_key"}), \
+         patch("app.requests.get", return_value=mock_response):
         response = client.get("/news?q=apple")
 
-    assert response.status_code == HTTP_STATUS_INTERNAL_SERVER_ERROR
+    assert response.status_code == HTTP_STATUS_API_ERROR
     assert response.get_json() == {"Error": "Failed to fetch news articles"}
 
 def test_news_no_articles_found() -> None:
@@ -112,7 +118,8 @@ def test_news_no_articles_found() -> None:
         "articles": [],
     }
 
-    with patch("app.requests.get", return_value=mock_response):
+    with patch.dict(os.environ, {"NEWS_API_KEY": "test_key"}), \
+         patch("app.requests.get", return_value=mock_response):
         response = client.get("/news?q=nonexistentcompany")
 
     assert response.status_code == HTTP_STATUS_API_ERROR
