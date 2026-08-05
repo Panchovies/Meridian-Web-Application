@@ -1,0 +1,16 @@
+# Build on the rules gitleaks ships with rather than replacing them.
+[extend]
+useDefault = true
+
+# Anything genuinely not a secret goes here, with a reason. Keep this list
+# short: every entry is a rule that will never fire again, and a real key that
+# happens to match an over-broad pattern will slip through silently.
+[[rules]]
+id = "generic-api-key"
+
+  [[rules.allowlists]]
+  description = "Placeholder credentials in documentation and examples"
+  regexTarget = "match"
+  regexes = [
+    '''(?i)(example|placeholder|changeme|your[-_]?(api[-_]?)?key|xxx+)''',
+  ]

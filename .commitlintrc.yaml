@@ -1,0 +1,17 @@
+# Conventional Commits — https://www.conventionalcommits.org/en/v1.0.0/
+#
+# Subject line:  <type>(<optional scope>): <description>
+# Examples:      feat(health): add readiness probe
+#                fix: return 503 when the dependency check fails
+#                docs: document container versus direct execution
+#
+# The type drives the branch name: work whose prevailing type is `feat` belongs
+# on a `feat/...` branch, `fix` work on a `fix/...` branch, and so on.
+extends:
+  - "@commitlint/config-conventional"
+
+rules:
+  # The default set already enforces type, case, and a non-empty subject.
+  # These two are tightened deliberately.
+  header-max-length: [2, "always", 72]
+  body-max-line-length: [1, "always", 100]

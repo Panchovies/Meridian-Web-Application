@@ -1,0 +1,8 @@
+# Copyright (c) 2026 Meridian Capital Markets
+"""Constants for the Flask web service."""
+
+HTTP_STATUS_OK = 200
+HTTP_STATUS_BAD_REQUEST = 400
+HTTP_STATUS_API_ERROR = 404
+HTTP_STATUS_INTERNAL_SERVER_ERROR = 500
+DEFAULT_PORT = 5000
