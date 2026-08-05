@@ -34,7 +34,13 @@ def get_news() -> tuple:
         return (jsonify({"Error": "Missing required query parameter 'q'"}),
                 HTTP_STATUS_BAD_REQUEST)
 
-    api_request_url = f"https://newsapi.org/v2/top-headlines?apiKey=a0b43419dc1c49a8978b805be0c52953&q={query}&country=us&pageSize=5"
+    api_key = os.environ.get("NEWS_API_KEY")
+    if not api_key:
+        return (jsonify({"Error":
+                         "Missing NEWS_API_KEY in environment variables"}),
+                         HTTP_STATUS_INTERNAL_SERVER_ERROR)
+
+    api_request_url = f"https://newsapi.org/v2/top-headlines?apiKey={api_key}&q={query}&country=us&pageSize=5"
     try:
         api_response = requests.get(api_request_url, timeout=5)
         api_response.raise_for_status()
@@ -51,7 +57,7 @@ def get_news() -> tuple:
         return (jsonify({"Error": f"Failed to fetch news articles: {e!s}"}),
                 HTTP_STATUS_INTERNAL_SERVER_ERROR)
 
-    return jsonify(response.get("articles", [])), HTTP_STATUS_OK
+    return (jsonify(response.get("articles", [])), HTTP_STATUS_OK)
 
 @app.route("/health")
 def health() -> tuple:
