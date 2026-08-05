@@ -7,6 +7,7 @@ lint:
   stage: lint
   image: python:3.14
   script:
+    - pip install -r requirements.txt
     - pip install ruff mypy
     - ruff check .
     - mypy .
