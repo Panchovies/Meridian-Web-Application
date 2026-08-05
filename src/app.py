@@ -58,8 +58,7 @@ def get_news() -> tuple:
         return (jsonify({"Error": f"Failed to fetch news articles: {e!s}"}),
                 HTTP_STATUS_INTERNAL_SERVER_ERROR)
 
-    # Bug is here
-    return (jsonify(response.get("articles", [])), HTTP_STATUS_API_ERROR)
+    return (jsonify(response.get("articles", [])), HTTP_STATUS_OK)
 
 @app.route("/health")
 def health() -> tuple:
