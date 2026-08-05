@@ -3,6 +3,7 @@
 stages:
   - lint
   - test
+  - build
 
 variables:
   # gitleaks scans history and commitlint needs the merge-request commit range;
@@ -77,3 +78,11 @@ pytest:
   stage: test
   script:
     - pytest -q
+
+build:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - docker compose build
