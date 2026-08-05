@@ -15,10 +15,11 @@ workflow:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
 .python:
-  image: python:3.11-slim
+  image: python:3.14-slim
   before_script:
     - pip install --quiet --upgrade pip
     - pip install --quiet -e '.[dev]'
+    - pip install --quiet -r requirements.txt
 
 ruff:
   extends: .python
