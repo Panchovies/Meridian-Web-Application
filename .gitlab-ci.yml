@@ -95,10 +95,6 @@ push:
   image: docker:latest
   services:
     - docker:dind
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-        when: manual
   variables:
     AWS_DEFAULT_REGION: us-east-1
     ECR_REPOSITORY: meridian-web-application
