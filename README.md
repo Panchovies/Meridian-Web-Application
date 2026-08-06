@@ -90,6 +90,17 @@ curl http://localhost:5000/health
 
 or by visiting that URL in a browser.
 
+## Running tests
+
+With the virtual environment active:
+
+```bash
+pytest -v
+```
+
+This runs the test suite, which checks that `/health` returns a 200 status
+code and that the response body contains the expected fields.
+
 ## Running with Docker
 
 With Docker Desktop running in the background:
@@ -174,16 +185,30 @@ To stop and remove the running containers, run:
 docker compose down
 ```
 
-## Running tests
+## CI Pipeline
 
-With the virtual environment active:
+The CI pipeline runs automatically whenever a **Merge Request (MR)** is opened. It validates the codebase through four stages to ensure code quality and deployment readiness.
 
-```bash
-pytest -v
-```
+### Lint
 
-This runs the test suite, which checks that `/health` returns a 200 status
-code and that the response body contains the expected fields.
+Performs code quality and static analysis checks, including:
+
+- Commit message validation
+- Secret detection
+- MyPy type checking
+- Ruff linting
+
+### Test
+
+Runs the project's **Pytest** suite to verify that existing and newly added tests pass successfully.
+
+### Build
+
+Builds the Docker image to ensure the application can be packaged without errors.
+
+### AWS
+
+Authenticates with **Amazon ECR** and verifies that the Docker image can be pushed successfully.
 
 ## Running in Python vs Docker
 
