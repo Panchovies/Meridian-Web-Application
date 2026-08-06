@@ -12,7 +12,7 @@ from datetime import UTC, datetime
 import requests
 from flask import Flask, jsonify, request
 
-from constants import (
+from .constants import (
     DEFAULT_PORT,
     HTTP_STATUS_API_ERROR,
     HTTP_STATUS_BAD_REQUEST,

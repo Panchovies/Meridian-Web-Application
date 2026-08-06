@@ -12,8 +12,8 @@ import os
 from unittest.mock import Mock, patch
 
 import requests
-from src.app import app
-from src.constants import (
+from src.app.app import app
+from src.app.constants import (
     HTTP_STATUS_API_ERROR,
     HTTP_STATUS_BAD_REQUEST,
     HTTP_STATUS_INTERNAL_SERVER_ERROR,
@@ -34,7 +34,7 @@ def test_news_status_code() -> None:
     }
 
     with patch.dict(os.environ, {"NEWS_API_KEY": "test_key"}), \
-         patch("src.app.requests.get", return_value=mock_response):
+         patch("src.app.app.requests.get", return_value=mock_response):
         response = client.get("/news?q=apple")
 
     assert response.status_code == HTTP_STATUS_OK
@@ -51,7 +51,7 @@ def test_news_missing_query_parameter() -> None:
     }
 
     with patch.dict(os.environ, {"NEWS_API_KEY": "test_key"}), \
-         patch("src.app.requests.get", return_value=mock_response):
+         patch("src.app.app.requests.get", return_value=mock_response):
         response = client.get("/news")
     assert response.status_code == HTTP_STATUS_BAD_REQUEST
     assert response.get_json() == {"Error":
@@ -69,7 +69,7 @@ def test_news_missing_query_string() -> None:
     }
 
     with patch.dict(os.environ, {"NEWS_API_KEY": "test_key"}), \
-         patch("src.app.requests.get", return_value=mock_response):
+         patch("src.app.app.requests.get", return_value=mock_response):
         response = client.get("/news?q=%20")
     assert response.status_code == HTTP_STATUS_BAD_REQUEST
     assert response.get_json() == {"Error":
@@ -80,7 +80,7 @@ def test_news_api_failure() -> None:
     client = app.test_client()
 
     with patch.dict(os.environ, {"NEWS_API_KEY": "test_key"}), \
-         patch("src.app.requests.get",
+         patch("src.app.app.requests.get",
                side_effect=requests.RequestException("API failure")):
         response = client.get("/news?q=apple")
 
@@ -100,7 +100,7 @@ def test_news_api_non_ok_status() -> None:
     }
 
     with patch.dict(os.environ, {"NEWS_API_KEY": "test_key"}), \
-         patch("src.app.requests.get", return_value=mock_response):
+         patch("src.app.app.requests.get", return_value=mock_response):
         response = client.get("/news?q=apple")
 
     assert response.status_code == HTTP_STATUS_INTERNAL_SERVER_ERROR
@@ -119,7 +119,7 @@ def test_news_no_articles_found() -> None:
     }
 
     with patch.dict(os.environ, {"NEWS_API_KEY": "test_key"}), \
-         patch("src.app.requests.get", return_value=mock_response):
+         patch("src.app.app.requests.get", return_value=mock_response):
         response = client.get("/news?q=nonexistentcompany")
 
     assert response.status_code == HTTP_STATUS_API_ERROR
