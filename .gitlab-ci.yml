@@ -4,6 +4,7 @@ stages:
   - lint
   - test
   - build
+  - push
 
 variables:
   # gitleaks scans history and commitlint needs the merge-request commit range;
@@ -74,15 +75,38 @@ commitlint-history:
     - npx commitlint --from "$(git rev-list --max-parents=0 HEAD | tail -1)" --to HEAD --verbose
 
 pytest:
+  # Runs all pytests. The test suite is small and fast, so we run it on every commit.
   extends: .python
   stage: test
   script:
     - pytest -q
 
 build:
+  # Builds the Docker image. Then composes the 
   stage: build
   image: docker:latest
   services:
     - docker:dind
   script:
     - docker compose build
+
+push:
+  stage: push
+  image: docker:latest
+  services:
+    - docker:dind
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  variables:
+    AWS_DEFAULT_REGION: us-east-1
+    ECR_REPOSITORY: meridian-web-application
+  before_script:
+    - apk add --no-cache aws-cli
+  script:
+    - aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login --username AWS --password-stdin "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com"
+    - docker compose build
+    - docker tag "$ECR_REPOSITORY:latest" "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY:$CI_COMMIT_SHORT_SHA"
+    - docker tag "$ECR_REPOSITORY:latest" "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY:latest"
+    - docker push "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY:$CI_COMMIT_SHORT_SHA"
+    - docker push "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY:latest"
+ 
