@@ -18,10 +18,13 @@ repos:
       - id: mypy
         # The hook runs in its own environment and cannot see the project's
         # dependencies. List any package that ships type information here.
-        additional_dependencies: []
+        pass_filenames: false
+        additional_dependencies: [
+          "types-requests",
+        ]
 
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.30.1
+    rev: v8.30.0
     hooks:
       - id: gitleaks
 
