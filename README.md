@@ -206,6 +206,6 @@ Runs the project's **Pytest** suite to verify that existing and newly added test
 
 Builds the Docker image to ensure the application can be packaged without errors.
 
-### Push
+### Push (Only on default [main] branch)
 
 Authenticates with **Amazon ECR** and verifies that the Docker image can be pushed successfully.
