@@ -26,3 +26,6 @@ htmlcov/
 *.swp
 \#*\#
 node_modules/
+
+# Manual Deployment Script Variables
+.deploy_var
