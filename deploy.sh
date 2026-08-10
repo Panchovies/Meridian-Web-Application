@@ -1,4 +1,4 @@
-# !/bin/bash
+#!/bin/bash
 
 # Directory of the script must have a .deploy_var file with the following variables:
 # AWS_KEY_PATH: Path to the AWS EC2 private key file (e.g., /path/to/key.pem)
