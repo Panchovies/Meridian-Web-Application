@@ -1,3 +1,9 @@
+# Tags the runner so that it runs on the cohort runner, which has enough 
+# resources to run the tests and build the Docker image.
+default:
+  tags:
+    - cohort
+
 # Four checks, all of them blocking. The same four run locally via pre-commit,
 # so a red pipeline should never be the first time you hear about a problem.
 stages:
