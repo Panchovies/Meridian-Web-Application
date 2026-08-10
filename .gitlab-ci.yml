@@ -104,7 +104,6 @@ push:
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   variables:
-    AWS_DEFAULT_REGION: us-east-1
     ECR_REPOSITORY: meridian-web-application
   before_script:
     - apk add --no-cache aws-cli
