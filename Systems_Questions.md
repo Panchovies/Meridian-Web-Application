@@ -37,3 +37,23 @@ If the application is down, that means you would not even be able to run it loca
 ### What happens to in-flight requests if the container is restarted
 
 The in-flight requests would be interrupted if the container is restarted, and would require the client to retry them after restarting, since they would not automatically resume after restarting.
+
+
+# Monday, August 10th
+
+## Why Use Kubernetes? Why Not Use A Manual Script?
+
+### IP changes
+Unless you are using an Elastic IP, which costs money, every time you restart the EC2 instance, you have to copy the new IP over to the deploy script. This adds a task that Kubernetes skips.
+
+### Multiple Instances
+With a script, you must manually decide specifics when it comes to creating multiple instances. It alos requires running the script multiple times depending on how it is set up. Kubernetes handles all of this internally and allows for the simple distrobution of multiple instances.
+
+### Health Checks
+A script must be created with exact health checks and if statments in mind, and even then a script will only be executed once and cannot remain in a constant state of checking. Kubernetes allows for a live health check as well as continuously watching over the instances.
+
+### Updating
+If updating, a script must usually teardwon the old process or change something before the new process can begin. Kubernetes allows for rolling updates which deploys new versions side-by-side with old ones until all traffic is on the new one.
+
+### Secret Management
+For the script, secrets like IP, account ID, etc... must be stored in some local file, while Kubernetes encrypts secrets natively.
