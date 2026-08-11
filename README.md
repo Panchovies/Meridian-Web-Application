@@ -103,6 +103,9 @@ code and that the response body contains the expected fields.
 
 ## Running with Docker
 
+Docker runs the applicaiton using gunicorn, opposite to how it is run directly in Python.
+Docker also adds a healthcheck that sends signals based on the health of the application.
+
 With Docker Desktop running in the background:
 
 Build the image:
