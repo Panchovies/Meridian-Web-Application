@@ -19,6 +19,8 @@ spec:
         image: meridian-web-application:local
         imagePullPolicy: Never
         envFrom:
+          - configMapRef:
+                name: meridian-web-application-config
           - secretRef:
               name: meridian-api-keys
         ports:
