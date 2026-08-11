@@ -188,6 +188,10 @@ To stop and remove the running containers, run:
 docker compose down
 ```
 
+## Deploying With Minikube
+
+Repository contains deployment.yaml, service.yaml, and configmap.yaml to use for deploying with Minikube
+
 ## CI Pipeline
 
 The CI pipeline runs automatically whenever a **Merge Request (MR)** is opened. It validates the codebase through four stages to ensure code quality and deployment readiness.
