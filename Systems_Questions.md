@@ -57,3 +57,15 @@ If updating, a script must usually teardwon the old process or change something 
 
 ### Secret Management
 For the script, secrets like IP, account ID, etc... must be stored in some local file, while Kubernetes encrypts secrets natively.
+
+
+# Tuesday, August 11th
+
+## How Does Kubernetes Self-Heal?
+
+When deleting a pod with kubectl, we can examine multiple changes with the pods.
+First, termination begins with the selected pod.
+Before the pod is even terminated, Kubernetes begins creating a new container to replace the previously deleted pod.
+Once the pod is completely terminated the new pod takes over.
+One thing of notice is that during this termination, the endpoint did not once fail, even when refreshing.
+This is most likely due to Kubernetes shifting traffic over to the only available pod at the time until the new pod was up and running.
