@@ -18,13 +18,19 @@ spec:
       - name: meridian-web-application
         image: meridian-web-application:local
         imagePullPolicy: Never
+        ports:
+        - containerPort: 5000
         envFrom:
           - configMapRef:
                 name: meridian-web-application-config
           - secretRef:
               name: meridian-api-keys
-        ports:
-        - containerPort: 5000
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 3
+          periodSeconds: 3
         resources:
           requests:
             memory: "128Mi"
