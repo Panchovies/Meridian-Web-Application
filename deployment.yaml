@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
       - name: meridian-web-application
-        image: meridian-web-application:broken
+        image: meridian-web-application:local
         imagePullPolicy: Never
         ports:
         - containerPort: 5000

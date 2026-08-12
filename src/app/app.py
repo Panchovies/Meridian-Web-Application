@@ -80,7 +80,7 @@ def health() -> tuple:
         "status": "ok",
         "timestamp": date,
         "message": "Service is healthy and running.",
-    }), 500 # HTTP_STATUS_OK
+    }), HTTP_STATUS_OK
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=DEFAULT_PORT, # noqa: S104
