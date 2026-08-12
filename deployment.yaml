@@ -6,6 +6,11 @@ metadata:
     app: meridian-web-application
 spec:
   replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
   selector:
     matchLabels:
       app: meridian-web-application
@@ -16,7 +21,7 @@ spec:
     spec:
       containers:
       - name: meridian-web-application
-        image: meridian-web-application:local
+        image: meridian-web-application:broken
         imagePullPolicy: Never
         ports:
         - containerPort: 5000
@@ -36,21 +41,6 @@ spec:
         readinessProbe:
           httpGet:
             path: /health
-            port: 5000
-          initialDelaySeconds: 0
-          periodSeconds: 3
-          failureThreshold: 1
-        # Liveness and readiness probes for /news endpoint
-        livenessProbe:
-          httpGet:
-            path: /news
-            port: 5000
-          initialDelaySeconds: 10
-          periodSeconds: 10
-          failureThreshold: 3
-        readinessProbe:
-          httpGet:
-            path: /news
             port: 5000
           initialDelaySeconds: 0
           periodSeconds: 3

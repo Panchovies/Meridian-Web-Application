@@ -69,11 +69,18 @@ def health() -> tuple:
         and a status code of 200
     """
     date = datetime.now(UTC).isoformat()
+    api_key = os.environ.get("NEWS_API_KEY")
+    if not api_key:
+        return jsonify({
+                "status": "error",
+                "timestamp": date,
+                "message": "Service is missing api key for NewsAPI",
+            }), 500
     return jsonify({
         "status": "ok",
         "timestamp": date,
         "message": "Service is healthy and running.",
-    }), HTTP_STATUS_OK
+    }), 500 # HTTP_STATUS_OK
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=DEFAULT_PORT, # noqa: S104
