@@ -25,6 +25,7 @@ spec:
                 name: meridian-web-application-config
           - secretRef:
               name: meridian-api-keys
+        # Liveness and readiness probes for /health endpoint
         livenessProbe:
           httpGet:
             path: /health
@@ -39,6 +40,22 @@ spec:
           initialDelaySeconds: 0
           periodSeconds: 3
           failureThreshold: 1
+        # Liveness and readiness probes for /news endpoint
+        livenessProbe:
+          httpGet:
+            path: /news
+            port: 5000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /news
+            port: 5000
+          initialDelaySeconds: 0
+          periodSeconds: 3
+          failureThreshold: 1
+        # Determines resource requests and limits
         resources:
           requests:
             memory: "128Mi"
