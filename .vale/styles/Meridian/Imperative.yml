@@ -1,0 +1,18 @@
+# Conventional Commits asks for the imperative mood: "add", not "adds",
+# "added", or "adding". The subject completes the sentence "if applied, this
+# commit will ___".
+#
+# This is a word list, not grammar. It matches a conventional-commit type
+# prefix followed immediately by a known non-imperative form, which is what
+# keeps it off the commit body — "This adds the probe" in a paragraph is fine
+# and is not matched, because no "feat:" precedes it.
+#
+# It will miss verbs that are not listed. Add them here when you meet one.
+extends: existence
+message: "Use the imperative mood: '%s' — write 'add', not 'adds'/'added'/'adding'."
+link: https://www.conventionalcommits.org/en/v1.0.0/
+level: error
+nonword: true
+ignorecase: true
+tokens:
+  - '(?:build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(?:\([^)]*\))?!?:\s+(?:add(?:s|ed|ing)|allow(?:s|ed|ing)|bump(?:s|ed|ing)|chang(?:es|ed|ing)|clean(?:s|ed|ing)|correct(?:s|ed|ing)|creat(?:es|ed|ing)|delet(?:es|ed|ing)|document(?:s|ed|ing)|drop(?:s|ped|ping)|enabl(?:es|ed|ing)|ensur(?:es|ed|ing)|extract(?:s|ed|ing)|fix(?:es|ed|ing)|handl(?:es|ed|ing)|implement(?:s|ed|ing)|improv(?:es|ed|ing)|introduc(?:es|ed|ing)|mak(?:es|ing)|made|mov(?:es|ed|ing)|prevent(?:s|ed|ing)|refactor(?:s|ed|ing)|remov(?:es|ed|ing)|renam(?:es|ed|ing)|replac(?:es|ed|ing)|restor(?:es|ed|ing)|return(?:s|ed|ing)|revert(?:s|ed|ing)|support(?:s|ed|ing)|switch(?:es|ed|ing)|updat(?:es|ed|ing)|us(?:es|ed|ing))\b'
