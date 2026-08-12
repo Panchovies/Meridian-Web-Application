@@ -15,7 +15,6 @@ from flask import Flask, jsonify, request
 from .constants import (
     DEFAULT_PORT,
     HTTP_STATUS_API_ERROR,
-    HTTP_STATUS_BAD_REQUEST,
     HTTP_STATUS_INTERNAL_SERVER_ERROR,
     HTTP_STATUS_OK,
 )
@@ -33,7 +32,7 @@ def get_news() -> tuple:
     query = request.args.get("q", "").strip()
     if not query:
         return (jsonify({"Error": "Missing required query parameter 'q'"}),
-                HTTP_STATUS_BAD_REQUEST)
+                HTTP_STATUS_OK)
 
     api_key = os.environ.get("NEWS_API_KEY")
     if not api_key:
@@ -70,6 +69,13 @@ def health() -> tuple:
         and a status code of 200
     """
     date = datetime.now(UTC).isoformat()
+    api_key = os.environ.get("NEWS_API_KEY")
+    if not api_key:
+        return jsonify({
+                "status": "error",
+                "timestamp": date,
+                "message": "Service is missing api key for NewsAPI",
+            }), HTTP_STATUS_INTERNAL_SERVER_ERROR
     return jsonify({
         "status": "ok",
         "timestamp": date,
