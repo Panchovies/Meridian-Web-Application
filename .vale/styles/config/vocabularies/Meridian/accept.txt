@@ -19,6 +19,7 @@ gitignored
 GitLab
 gitleaks
 Grafana
+gunicorn
 Jira
 kubectl
 Kubernetes

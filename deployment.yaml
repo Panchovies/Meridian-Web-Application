@@ -20,36 +20,36 @@ spec:
         app: meridian-web-application
     spec:
       containers:
-      - name: meridian-web-application
-        image: meridian-web-application:local
-        imagePullPolicy: Never
-        ports:
-        - containerPort: 5000
-        envFrom:
-          - configMapRef:
+        - name: meridian-web-application
+          image: meridian-web-application:local
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 5000
+          envFrom:
+            - configMapRef:
                 name: meridian-web-application-config
-          - secretRef:
-              name: meridian-api-keys
-        # Liveness and readiness probes for /health endpoint
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 5000
-          initialDelaySeconds: 10
-          periodSeconds: 10
-          failureThreshold: 3
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 5000
-          initialDelaySeconds: 0
-          periodSeconds: 3
-          failureThreshold: 1
-        # Determines resource requests and limits
-        resources:
-          requests:
-            memory: "128Mi"
-            cpu: "250m"
-          limits:
-            memory: "256Mi"
-            cpu: "500m"
+            - secretRef:
+                name: meridian-api-keys
+          # Liveness and readiness probes for /health endpoint
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 0
+            periodSeconds: 3
+            failureThreshold: 1
+          # Determines resource requests and limits
+          resources:
+            requests:
+              memory: '128Mi'
+              cpu: '250m'
+            limits:
+              memory: '256Mi'
+              cpu: '500m'
