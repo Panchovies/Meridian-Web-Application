@@ -69,3 +69,15 @@ Before the pod is even terminated, Kubernetes begins creating a new container to
 Once the pod is completely terminated the new pod takes over.
 One thing of notice is that during this termination, the endpoint did not once fail, even when refreshing.
 This is most likely due to Kubernetes shifting traffic over to the only available pod at the time until the new pod was up and running.
+
+# Wednesday, August 12th
+
+## How Probes React To A Broken Health Check
+
+Before introducing the new bug, two pods were running correctly. I changed the /health code such that the endpoint would return 500 instead of 200. I built a new image with the "broken" tag attatched, then changed the deployment.yaml file to reflect this image change. After applying, Kubernetes began the process of creating a new pod featuring this new image's container. It began running, but since the /health endpoint was destined to fail, it would fail, then restart. However, the 2 old pods from the previous replica set were not terminated. They stayed running, taking up all traffic as they waited for the new pod to be approved. The pods would not be replaced unless Kubernetes knew that they were healthy. This behavior is the rolling updates; pods were not deleted even when new images were given in case the images did not run correctly.
+
+## Rolling Update vs Full Pod Deletion
+
+If we were to fully delete all pods then implent new pods with new images, then if there was a bug in the new image, then all traffic to those nodes would halt, there would be no where to send additional traffic, and we would have to delete those new nodes and reinstate the original image, whihc could be difficult if we are replacing the old images with the new ones.
+With rolling updates, pods are only removed when the pods have been probed properly and are running as they should. This gives a fallback where if new buggy images are used, the old pods will be active and funnel traffic through them until those new buggy images are fixed and reapplied.
+Meridian cares about this because they receive high volumes of traffic daily. If they have to shut down pods for even a brief moment because of a poor decision to delete them instead of performing a rolling update, they can lose a lot of money due to the high volume of traffic which would have nowhere to go.
