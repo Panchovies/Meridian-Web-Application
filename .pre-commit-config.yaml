@@ -24,7 +24,7 @@ repos:
     rev: v3.9.6
     hooks:
       - id: prettier
-        types_or: [markdown, yaml, json]
+        types_or: [markdown, yaml, json, javascript]
 
   # Style rules prettier has no opinion about. Rules that would argue with
   # prettier are switched off in .markdownlint.json rather than fought with.
