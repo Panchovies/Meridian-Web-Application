@@ -75,7 +75,7 @@ def health() -> tuple:
                 "status": "error",
                 "timestamp": date,
                 "message": "Service is missing api key for NewsAPI",
-            }), 500
+            }), HTTP_STATUS_INTERNAL_SERVER_ERROR
     return jsonify({
         "status": "ok",
         "timestamp": date,
