@@ -69,3 +69,9 @@ Before the pod is even terminated, Kubernetes begins creating a new container to
 Once the pod is completely terminated the new pod takes over.
 One thing of notice is that during this termination, the endpoint did not once fail, even when refreshing.
 This is most likely due to Kubernetes shifting traffic over to the only available pod at the time until the new pod was up and running.
+
+# Wednesday, August 12th
+
+## How Probes React To A Broken Health Check
+
+## Rolling Update vs Full Pod Deletion
