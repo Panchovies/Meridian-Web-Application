@@ -74,4 +74,6 @@ This is most likely due to Kubernetes shifting traffic over to the only availabl
 
 ## How Probes React To A Broken Health Check
 
+Before introducing the new bug, two pods were running correctly. I changed the /health code such that the endpoint would return 500 instead of 200. I built a new image with the "broken" tag attatched, then changed the deployment.yaml file to reflect this image change. After applying, Kubernetes began the process of creating a new pod featuring this new image's container. It began running, but since the /health endpoint was destined to fail, it would fail, then restart. However, the 2 old pods from the previous replica set were not terminated. They stayed running, taking up all traffic as they waited for the new pod to be approved. The pods would not be replaced unless Kubernetes knew that they were healthy. This behavior is the rolling updates; pods were not deleted even when new images were given in case the images did not run correctly.
+
 ## Rolling Update vs Full Pod Deletion
