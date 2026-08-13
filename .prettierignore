@@ -1,0 +1,12 @@
+# Tool caches and build output. Nothing here is authored by hand.
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+.venv/
+
+# Vale's downloaded styles are vendor files; formatting them creates noise
+# in every diff and helps nobody.
+.vale/styles/

@@ -1,0 +1,14 @@
+# Prettier formats YAML first, so the rules it decides are switched off here
+# rather than fought with. What is left is the part prettier has no opinion
+# about: structure, duplicate keys, and truthy values.
+extends: default
+
+rules:
+  indentation:
+    spaces: 2
+    indent-sequences: consistent
+  line-length: disable
+  trailing-spaces: disable
+  empty-lines: disable
+  comments:
+    level: warning

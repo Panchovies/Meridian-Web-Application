@@ -1,16 +1,55 @@
-# Local enforcement of the same four checks CI runs. Install once with:
+# Local enforcement of the same checks CI runs. Install once with:
 #
 #     pre-commit install --install-hooks
 #     pre-commit install --hook-type commit-msg
 #
 # The second line is not optional: commitlint runs at the commit-msg stage and
 # is silently skipped without it.
+#
+# Order matters here. Hooks run top to bottom, and the formatters run before
+# the linters that would otherwise complain about formatting the formatter is
+# about to fix. Anything that can repair a file does so in place, so a failed
+# run usually means "look at the diff and commit it", not "go and edit by hand".
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.16.1
     hooks:
       - id: ruff-check
         args: [--fix]
+
+  # Formats Markdown, YAML and JSON. Runs first so that markdownlint and
+  # yamllint below are judging the formatted file, not the one you typed.
+  # --write is already in the hook's entry point; it rewrites in place.
+  - repo: https://github.com/rbubley/mirrors-prettier
+    rev: v3.9.6
+    hooks:
+      - id: prettier
+        types_or: [markdown, yaml, json, javascript]
+
+  # Style rules prettier has no opinion about. Rules that would argue with
+  # prettier are switched off in .markdownlint.json rather than fought with.
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.49.1
+    hooks:
+      - id: markdownlint-fix
+
+  # Structural checks only: duplicate keys, truthy values, indentation.
+  # yamllint has no autofix, so this one reports rather than repairs.
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.38.0
+    hooks:
+      - id: yamllint
+        args: [--config-file, .yamllint.yml]
+
+  # Prose: the README and the comments in the source. Also cannot autofix —
+  # a spelling mistake needs a person to decide what the word should be.
+  - repo: https://github.com/errata-ai/vale
+    rev: v3.14.0
+    hooks:
+      - id: vale
+        name: vale (README and code comments)
+        args: [--config, .vale.ini, --no-wrap]
+        types_or: [markdown, python]
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v2.3.0
@@ -19,12 +58,10 @@ repos:
         # The hook runs in its own environment and cannot see the project's
         # dependencies. List any package that ships type information here.
         pass_filenames: false
-        additional_dependencies: [
-          "types-requests",
-        ]
+        additional_dependencies: ['types-requests']
 
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.30.0
+    rev: v8.30.1
     hooks:
       - id: gitleaks
 
@@ -33,4 +70,20 @@ repos:
     hooks:
       - id: commitlint
         stages: [commit-msg]
-        additional_dependencies: ["@commitlint/config-conventional"]
+        additional_dependencies: ['@commitlint/config-conventional']
+
+  # Git writes the commit message into .git/, and Vale refuses to read
+  # anything under a dot-directory — so the message cannot be passed as a
+  # file. Piping it in as stdin is the way through. --ext=.md picks the
+  # Markdown section of .vale.ini, which is where the Imperative rule lives.
+  - repo: local
+    hooks:
+      - id: vale-commit-msg
+        name: vale (commit message, imperative mood)
+        language: golang
+        additional_dependencies:
+          - github.com/errata-ai/vale/v3/cmd/vale@v3.14.0
+        entry:
+          bash -c 'exec vale --config .vale.ini --no-wrap --ext=.txt < "$1"'
+          bash
+        stages: [commit-msg]
