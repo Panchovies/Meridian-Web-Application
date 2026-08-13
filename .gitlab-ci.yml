@@ -7,8 +7,7 @@ default:
 # Four checks, all of them blocking. The same four run locally via pre-commit,
 # so a red pipeline should never be the first time you hear about a problem.
 stages:
-  - lint
-  - test
+  - checks
   - build
   - push
 
@@ -31,18 +30,18 @@ workflow:
 
 ruff:
   extends: .python
-  stage: lint
+  stage: checks
   script:
     - ruff check .
 
 mypy:
   extends: .python
-  stage: lint
+  stage: checks
   script:
     - mypy
 
 gitleaks:
-  stage: lint
+  stage: checks
   image:
     name: ghcr.io/gitleaks/gitleaks:v8.30.1
     entrypoint: ['']
@@ -52,7 +51,7 @@ gitleaks:
     - gitleaks git --verbose --redact .
 
 commitlint:
-  stage: lint
+  stage: checks
   image: node:22-alpine
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
@@ -71,7 +70,7 @@ commitlint-history:
   #
   # allow_failure is on until the back-catalog has been rewritten. Once your
   # history is clean, delete that line so this becomes blocking.
-  stage: lint
+  stage: checks
   image: node:22-alpine
   # allow_failure: true
   rules:
@@ -88,19 +87,19 @@ commitlint-history:
 # rather than --write: CI reports, your machine repairs. If one of these fails,
 # run `pre-commit run --all-files` locally and commit what it changes.
 prettier:
-  stage: lint
+  stage: checks
   image: node:22-alpine
   script:
     - npx --yes prettier@3.9.6 --check .
 
 markdownlint:
-  stage: lint
+  stage: checks
   image: node:22-alpine
   script:
     - npx --yes markdownlint-cli@0.49.1 "**/*.md"
 
 yamllint:
-  stage: lint
+  stage: checks
   image: python:3.11-slim
   before_script:
     - pip install --quiet yamllint==1.38.0
@@ -108,7 +107,7 @@ yamllint:
     - yamllint --config-file .yamllint.yml .
 
 vale:
-  stage: lint
+  stage: checks
   image: python:3.11-slim
   before_script:
     - apt-get update -qq && apt-get install -y -qq curl >/dev/null
@@ -122,7 +121,7 @@ vale:
 pytest:
   # Runs all pytests. The test suite is small and fast, so we run it on every commit.
   extends: .python
-  stage: test
+  stage: checks
   script:
     - pytest -q
 
