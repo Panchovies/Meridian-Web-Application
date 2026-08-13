@@ -150,3 +150,15 @@ of traffic daily. If they have to shut down pods for even a brief moment because
 of a poor decision to delete them instead of performing a rolling update, they
 can lose a lot of money due to the high volume of traffic which would have
 nowhere to go.
+
+## Thursday, August 13th
+
+### Load Test
+
+Sent in 1000 requests in rapid succession to the site. Grafana reflected this
+"attack" in about 5 seconds, which to me feels a bit slow, however it is
+possible that the amount of requests was too low for Grafana to immediately
+signal anything. Every dashboard besides pod resets spiked; however something
+interesting I noticed was that while CPU and HTTP request rate went back to
+their original values, memory stayed at the same position after peaking, long
+after there were no more get requests.
