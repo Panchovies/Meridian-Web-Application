@@ -8,10 +8,10 @@
 # The type drives the branch name: work whose prevailing type is `feat` belongs
 # on a `feat/...` branch, `fix` work on a `fix/...` branch, and so on.
 extends:
-  - "@commitlint/config-conventional"
+  - '@commitlint/config-conventional'
 
 rules:
   # The default set already enforces type, case, and a non-empty subject.
   # These two are tightened deliberately.
-  header-max-length: [2, "always", 72]
-  body-max-line-length: [1, "always", 100]
+  header-max-length: [2, 'always', 72]
+  body-max-line-length: [1, 'always', 100]

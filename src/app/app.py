@@ -27,7 +27,7 @@ def get_news() -> tuple:
 
     Query Parameters:
         q: The search query, either a company or ticker symbol.
-    Uses api call from https://newsapi.org/
+    Uses API call from https://newsapi.org/
     """
     query = request.args.get("q", "").strip()
     if not query:

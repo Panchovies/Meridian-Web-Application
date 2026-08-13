@@ -1,4 +1,4 @@
-# Tags the runner so that it runs on the cohort runner, which has enough 
+# Tags the runner so that it runs on the cohort runner, which has enough
 # resources to run the tests and build the Docker image.
 default:
   tags:
@@ -7,8 +7,7 @@ default:
 # Four checks, all of them blocking. The same four run locally via pre-commit,
 # so a red pipeline should never be the first time you hear about a problem.
 stages:
-  - lint
-  - test
+  - checks
   - build
   - push
 
@@ -31,36 +30,38 @@ workflow:
 
 ruff:
   extends: .python
-  stage: lint
+  stage: checks
   script:
     - ruff check .
 
 mypy:
   extends: .python
-  stage: lint
+  stage: checks
   script:
     - mypy
 
 gitleaks:
-  stage: lint
+  stage: checks
   image:
     name: ghcr.io/gitleaks/gitleaks:v8.30.1
-    entrypoint: [""]
+    entrypoint: ['']
   script:
     # --redact keeps any finding out of the job log, which is readable by
     # everyone in the group. The finding itself is still reported.
     - gitleaks git --verbose --redact .
 
 commitlint:
-  stage: lint
+  stage: checks
   image: node:22-alpine
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
   before_script:
     - apk add --no-cache git
-    - npm install --no-save --silent @commitlint/cli @commitlint/config-conventional
+    - npm install --no-save --silent @commitlint/cli
+      @commitlint/config-conventional
   script:
-    - npx commitlint --from "$CI_MERGE_REQUEST_DIFF_BASE_SHA" --to "$CI_COMMIT_SHA" --verbose
+    - npx commitlint --from "$CI_MERGE_REQUEST_DIFF_BASE_SHA" --to
+      "$CI_COMMIT_SHA" --verbose
 
 commitlint-history:
   # The commitlint job above only sees the merge request's own commits. This one
@@ -69,35 +70,81 @@ commitlint-history:
   #
   # allow_failure is on until the back-catalog has been rewritten. Once your
   # history is clean, delete that line so this becomes blocking.
-  stage: lint
+  stage: checks
   image: node:22-alpine
   # allow_failure: true
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   before_script:
     - apk add --no-cache git
-    - npm install --no-save --silent @commitlint/cli @commitlint/config-conventional
+    - npm install --no-save --silent @commitlint/cli
+      @commitlint/config-conventional
   script:
-    - npx commitlint --from "$(git rev-list --max-parents=0 HEAD | tail -1)" --to HEAD --verbose
+    - npx commitlint --from "$(git rev-list --max-parents=0 HEAD | tail -1)"
+      --to HEAD --verbose
+
+# Prose and formatting, mirroring the pre-commit hooks. These use --check
+# rather than --write: CI reports, your machine repairs. If one of these fails,
+# run `pre-commit run --all-files` locally and commit what it changes.
+prettier:
+  stage: checks
+  image: node:22-alpine
+  script:
+    - npx --yes prettier@3.9.6 --check .
+
+markdownlint:
+  stage: checks
+  image: node:22-alpine
+  script:
+    - npx --yes markdownlint-cli@0.49.1 "**/*.md"
+
+yamllint:
+  stage: checks
+  image: python:3.11-slim
+  before_script:
+    - pip install --quiet yamllint==1.38.0
+  script:
+    - yamllint --config-file .yamllint.yml .
+
+vale:
+  stage: checks
+  image: python:3.11-slim
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq curl >/dev/null
+    - >
+      curl -sSL
+      https://github.com/errata-ai/vale/releases/download/v3.14.0/vale_3.14.0_Linux_64-bit.tar.gz
+      | tar -xz -C /usr/local/bin vale
+  script:
+    - vale --config .vale.ini --no-wrap README.md src tests
 
 pytest:
   # Runs all pytests. The test suite is small and fast, so we run it on every commit.
   extends: .python
-  stage: test
+  stage: checks
   script:
     - pytest -q
 
 build:
-  # Builds the Docker image. Then composes the 
+  # Builds the Docker image. Then composes the
   stage: build
   image: docker:latest
   services:
     - docker:dind
+  variables:
+    ECR_REPOSITORY: meridian-web-application
+    DOCKER_TLS_CERTDIR: '/certs'
   script:
-    - docker compose build
+    - docker build -t "$ECR_REPOSITORY:$CI_COMMIT_SHORT_SHA" .
+    - docker save "$ECR_REPOSITORY:$CI_COMMIT_SHORT_SHA" -o image.tar
+  artifacts:
+    paths:
+      - image.tar
+    expire_in: 1 hour
 
 push:
   stage: push
+  needs: ['build']
   image: docker:latest
   services:
     - docker:dind
@@ -105,13 +152,19 @@ push:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   variables:
     ECR_REPOSITORY: meridian-web-application
+    DOCKER_TLS_CERTDIR: '/certs'
   before_script:
     - apk add --no-cache aws-cli
   script:
-    - aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login --username AWS --password-stdin "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com"
-    - docker compose build
-    - docker tag "$ECR_REPOSITORY:latest" "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY:$CI_COMMIT_SHORT_SHA"
-    - docker tag "$ECR_REPOSITORY:latest" "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY:latest"
-    - docker push "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY:$CI_COMMIT_SHORT_SHA"
-    - docker push "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY:latest"
- 
+    - aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login
+      --username AWS --password-stdin
+      "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com"
+    - docker load -i image.tar
+    - docker tag "$ECR_REPOSITORY:$CI_COMMIT_SHORT_SHA"
+      "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY:$CI_COMMIT_SHORT_SHA"
+    - docker tag "$ECR_REPOSITORY:$CI_COMMIT_SHORT_SHA"
+      "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY:latest"
+    - docker push
+      "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY:$CI_COMMIT_SHORT_SHA"
+    - docker push
+      "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY:latest"

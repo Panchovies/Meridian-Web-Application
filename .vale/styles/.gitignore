@@ -1,0 +1,8 @@
+# Downloaded style packages are vendor content and are not committed.
+# Our own style and vocabulary are.
+*
+!.gitignore
+!config/
+!config/**
+!Meridian/
+!Meridian/**

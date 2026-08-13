@@ -3,7 +3,7 @@ services:
     image: meridian-web-application
     build: .
     ports:
-      - "8080:5000"
+      - '8080:5000'
     environment:
       ENV: ${ENV}
       NEWS_API_KEY: ${NEWS_API_KEY}
