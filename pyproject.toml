@@ -70,6 +70,10 @@ files = ["src"]
 ignore_missing_imports = false
 warn_unused_ignores = true
 
+[[tool.mypy.overrides]]
+module = "prometheus_flask_exporter.*"
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 # Make src/ importable so `pytest` and `python -m pytest` behave identically.
 # Without this, bare `pytest` cannot import the package under a src layout.
