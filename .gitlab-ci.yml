@@ -148,8 +148,8 @@ push:
   image: docker:latest
   services:
     - docker:dind
-  #rules:
-  #  - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   variables:
     ECR_REPOSITORY: meridian-web-application
     DOCKER_TLS_CERTDIR: '/certs'
