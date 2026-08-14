@@ -26,6 +26,7 @@ Kubernetes
 lifecycle
 linter
 linters
+linux
 lockfile
 lockfiles
 markdownlint
@@ -40,10 +41,10 @@ prettier
 Prometheus
 pyproject
 pytest
-repo
+(?i)repo
 repos
 ruff
-runbook
+(?i)runbook
 runbooks
 src
 subcommand
