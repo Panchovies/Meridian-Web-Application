@@ -7,9 +7,10 @@ Atlassian
 autofix
 changelog
 commitlint
-config
+(?i)config
 configs
 Confluence
+data's
 Dockerfile
 docstring
 docstrings
@@ -20,6 +21,7 @@ GitLab
 gitleaks
 Grafana
 gunicorn
+hardcoded
 Jira
 kubectl
 Kubernetes
@@ -27,6 +29,7 @@ lifecycle
 linter
 linters
 linux
+liveness
 lockfile
 lockfiles
 markdownlint

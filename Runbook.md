@@ -8,7 +8,7 @@ This runbook makes some assumptions:
 
 - You are a competent software engineer
 - You have little to no experience in the following: Flask, Docker, AWS, ECR,
-  EC2, and Kubernetes
+  EC2, Kubernetes, minikube, and Grafana
 - You understand basic linux commands and how to use a terminal, as well as
   knowledge in installing Python and any Python packages
 - You have access to my AWS account, in this context that account would be
@@ -22,6 +22,7 @@ chapters:
 - Docker
 - AWS
 - Kubernetes
+- Grafana
 
 This runbook follows a certain pattern for each of the chapters (excluding
 Working Within This Repo):
@@ -344,3 +345,113 @@ whatever port you're testing.
   go looking for any other problem.
 
 ## Kubernetes
+
+### What Is It
+
+Kubernetes runs multiple copies of the app, restarts them if they fail, rolls
+out new versions without downtime, and keeps config and secrets separate from
+the image itself. Locally, I run it on minikube.
+
+### How We Use It
+
+This repository uses 4 different manifests:
+
+- **`deployment.yaml`**: runs 2 replicas. It is set up with a rolling update
+  (`maxUnavailable: 0`, `maxSurge: 1`), so a new pod comes up before an old one
+  goes away — you should never have zero available replicas during a deploy.
+  Both `livenessProbe` and `readinessProbe` hit `/health` on port `5000`. Config
+  and secrets get pulled in wholesale via `envFrom`, grabbing every key from the
+  `meridian-web-application-config` ConfigMap and the `meridian-api-keys` Secret
+  as environment variables. Resource `requests` are `128Mi`/`250m` CPU; `limits`
+  are `256Mi`/`500m` CPU. `imagePullPolicy: Never` on the Deployment means
+  Kubernetes won't try to pull `meridian-web-application:local` from anywhere,
+  meaning it must be sitting in the node's local image cache. so much.
+- **`service.yaml`**: a `NodePort` Service, exposing the Deployment on port `80`
+  internally and `30080` on the node itself, forwarding to container port
+  `5000`.
+- **`configmap.yaml`**: non-secret config — just `PORT` and `ENVIRONMENT`.
+- **`meridian_service_monitor.yaml`**: tells Prometheus (via the Prometheus
+  Operator) to scrape `/metrics` every 15 seconds. This only works if you've
+  already got the Prometheus Operator and a release labeled `monitoring`
+  installed in your cluster.
+
+### How To Run It
+
+Start minikube and point your shell's Docker client at minikube's own Docker
+daemon, so the image you build ends up somewhere the cluster can actually see
+it, then build:
+
+```bash
+minikube start
+eval $(minikube docker-env) # This must be run once per terminal session if you want to build a new image
+docker build -t meridian-web-application:local .
+```
+
+I never committed the secret to the repo, so you'll need to create it by hand
+once before the Deployment will come up healthy:
+
+```bash
+kubectl create secret generic meridian-api-keys \
+  --from-literal=NEWS_API_KEY='your-key-here'
+```
+
+Apply the manifests:
+
+```bash
+kubectl apply -f configmap.yaml -f deployment.yaml -f service.yaml
+```
+
+Check it's up and reach it:
+
+```bash
+kubectl get pods
+minikube service meridian-web-application --url
+```
+
+### How To Diagnose It
+
+```bash
+kubectl get pods
+```
+
+`Running` with `2/2` (or however many containers) ready is what you want.
+Anything else — `CrashLoopBackOff`, `ImagePullBackOff`, `0/1` ready — send you
+to one of the next two commands.
+
+```bash
+kubectl describe pod <pod-name>
+```
+
+Check the events at the bottom, look for errors like probe failures, image pull
+errors, scheduling failures. I usually reach for this before logs, since it
+tells you _why_ a pod isn't ready rather than just what the app printed.
+
+```bash
+kubectl logs <pod-name>
+```
+
+Same idea as `docker logs`, just for a pod. Add `--previous` if the container
+already restarted and you need to see why it crashed last time, not what it's
+printing now.
+
+### Common Bugs
+
+- **`ImagePullBackOff` right after `minikube start`**: you built the image with
+  your regular Docker daemon instead of minikube's. Run
+  `eval $(minikube docker-env)` in the same shell you're building in, then
+  rebuild. You'll have to do this every time you open a new terminal — it
+  doesn't stick around.
+- **`CreateContainerConfigError` mentioning `meridian-api-keys`**: the Secret
+  was never created, or you deleted it. Re-run the `kubectl create secret`
+  command above.
+- **Readiness flapping / pod bouncing between ready and not ready**: I set the
+  readiness probe to `initialDelaySeconds: 0` and `failureThreshold: 1` — it
+  starts checking right away and only tolerates one failure. If the app is slow
+  to bind on startup, you'll see it get marked not-ready before it's had a real
+  chance. Compare that against the liveness probe's more forgiving
+  `initialDelaySeconds: 10` if you think this is what's happening.
+- **`/metrics` not showing up in Prometheus**: the `ServiceMonitor`'s
+  `namespaceSelector` is hardcoded to `default`, and its `release: monitoring`
+  label has to match however you installed the Prometheus Operator. If either
+  one is off for your cluster, Prometheus just won't scrape it — no error,
+  you'll just notice the data's missing.
