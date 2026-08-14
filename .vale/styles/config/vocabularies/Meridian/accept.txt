@@ -2,9 +2,11 @@
 #
 # Add a term here when it is correct and Vale does not know it. Do not add a
 # word to silence a genuine typo.
+Alertmanager
 allowlist
 Atlassian
 autofix
+cAdvisor
 changelog
 commitlint
 (?i)config
@@ -39,6 +41,7 @@ mypy
 namespace
 namespaces
 noqa
+OOMKilled
 pastebin
 prettier
 Prometheus

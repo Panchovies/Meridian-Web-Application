@@ -455,3 +455,115 @@ printing now.
   label has to match however you installed the Prometheus Operator. If either
   one is off for your cluster, Prometheus just won't scrape it — no error,
   you'll just notice the data's missing.
+
+## Grafana
+
+### What Is It
+
+Grafana is the dashboard on top of Prometheus's data. Prometheus scrapes and
+stores the metrics; Grafana is where you actually look at them. I installed it
+as part of the `kube-prometheus-stack` Helm chart in the `monitoring` namespace,
+alongside Prometheus itself, Alertmanager, and the exporters that feed them.
+
+### How We Use It
+
+Grafana isn't exposed outside the cluster, so you reach it by port-forwarding:
+
+```bash
+kubectl port-forward -n monitoring svc/monitoring-grafana 3000:80
+```
+
+Helm generates a random admin password rather than defaulting to something
+guessable. Get it with:
+
+```bash
+kubectl get secret -n monitoring monitoring-grafana \
+  -o jsonpath="{.data.admin-password}" | base64 -d
+```
+
+Username is `admin`. Open `http://localhost:3000` and log in.
+
+The chart ships a curated set of dashboards from the `kubernetes-mixin` project
+(per-pod resources, namespace-wide resources, networking, node-level stats),
+plus one I built myself specifically for Meridian, with 4 panels:
+
+#### Panel 1 — CPU Utilization
+
+```promql
+sum(rate(container_cpu_usage_seconds_total{namespace="default", pod=~"meridian.*"}[5m])) by (pod)
+```
+
+CPU usage per pod, in cores. The underlying metric is a cumulative counter, so
+this uses `rate()` over a 5-minute window to turn it into a per-second average —
+a raw counter just climbs forever and isn't useful to graph directly. Check this
+first if a pod feels slow and you suspect it's CPU-bound.
+
+#### Panel 2 — Memory Utilization
+
+```promql
+sum(container_memory_working_set_bytes{namespace="default", pod=~"meridian.*"}) by (pod)
+```
+
+Memory usage per pod. Uses `working_set_bytes` rather than `usage_bytes`
+specifically because working set is what the OOM killer actually evaluates — it
+excludes reclaimable page cache, so it's the more honest number for "how close
+is this pod to getting OOMKilled." Compare against the `256Mi` limit set in
+`deployment.yaml`.
+
+#### Panel 3 — Pod Restart Count
+
+```promql
+kube_pod_container_status_restarts_total{namespace="default", pod=~"meridian.*"}
+```
+
+Cumulative restarts per pod over time. Deliberately not rated — for restarts you
+want the raw step pattern (a line that jumps means "this pod restarted around
+this time"), since a rate of restarts is noisier and harder to read at a glance.
+If you're chasing a crash loop, this tells you when it started and whether it's
+ongoing.
+
+#### Panel 4 — HTTP Request Rate
+
+```promql
+sum(rate(flask_http_request_total{app="meridian"}[5m])) by (method, status)
+```
+
+Request rate broken down by HTTP method and status code. This comes from
+`prometheus-flask-exporter`, which I added to the app to expose a `/metrics`
+endpoint — without it, Prometheus only sees infrastructure-level metrics (CPU,
+memory, restarts) and has no idea what `/news` or `/health` are doing. This is
+the panel to check for a 500s incident: a spike in the `5xx` status series here
+confirms it's happening and roughly how often.
+
+### How To Diagnose It
+
+If a panel is empty or flat when it shouldn't be, first confirm Prometheus is
+actually scraping Meridian. Port-forward into Prometheus itself:
+
+```bash
+kubectl port-forward -n monitoring svc/monitoring-kube-prometheus-prometheus 9090:9090
+```
+
+Then check **Status → Targets** at `http://localhost:9090` and look for
+`meridian-monitor`. It should show as `UP`. If it's missing entirely or shows
+`DOWN`, the problem is upstream of Grafana — see the Common Bugs below.
+
+### Common Bugs
+
+- **Dashboard panels are empty, but Prometheus itself is running**: almost
+  always the `release: monitoring` label on `meridian_service_monitor.yaml`. The
+  Prometheus Operator only watches `ServiceMonitor` objects carrying the label
+  matching its own Helm release name (`monitoring`, in our case). Get this wrong
+  and the `ServiceMonitor` is silently ignored — no error anywhere, the data
+  just never shows up.
+- **Panel 4 specifically is empty, but 1–3 are fine**: Panels 1–3 come from
+  infrastructure-level metrics (cAdvisor, kube-state-metrics), which exist
+  regardless of what Meridian's code does. Panel 4 depends on Meridian itself
+  exposing `/metrics` via `prometheus-flask-exporter`. If that's missing from
+  the running image, Panel 4 will be empty while the rest work fine.
+- **Can't log in / forgot the password**: don't try to reset it manually — just
+  re-run the `kubectl get secret` command above. Helm doesn't rotate it, so the
+  same command works every time.
+- **`kubectl port-forward` connection drops**: this is a live connection tied to
+  your terminal session: closing the terminal, sleeping your laptop, or the pod
+  restarting will kill it. Just re-run the port-forward command.
