@@ -11,6 +11,7 @@ from datetime import UTC, datetime
 
 import requests
 from flask import Flask, jsonify, request
+from prometheus_flask_exporter import PrometheusMetrics
 
 from .constants import (
     DEFAULT_PORT,
@@ -20,6 +21,9 @@ from .constants import (
 )
 
 app = Flask(__name__)
+
+# Adds metrics endpoint to the application for Prometheus monitoring
+metrics = PrometheusMetrics(app)
 
 @app.route("/news")
 def get_news() -> tuple:
