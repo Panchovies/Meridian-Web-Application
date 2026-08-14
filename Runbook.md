@@ -99,7 +99,67 @@ gauge health metrics.
 ### How We Use It
 
 The python code for this application is small but important. All python
-application code is in the src/app/ path
+application code lives in the src/app/ directory.
+
+There are three endpoints used in this application:
+
+- `/health`: Returns the health of the application, which includes the health of
+  the other two endpoints.
+- `/metrics`: Gives metrics on network traffic. Uses a python package for most
+  of its implementation.
+- `/news`: Returns top news articles on the given query parameter `q=` in the
+  url. Needs a free API key from [NewsAPI](https://newsapi.org/).
+
+### How To Run It
+
+Clone the repository, then create and activate a virtual environment:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+Install dependencies:
+
+```bash
+uv pip install -r requirements.txt
+```
+
+Start the application:
+
+```bash
+python app.py
+```
+
+The server will start at `http://localhost:5000`. You can check the endpoint
+with:
+
+```bash
+curl http://localhost:5000/health
+```
+
+or by visiting that URL in a browser.
+
+### How To Diagnose It
+
+Unlikely that many issues would stem from the python code assuming it is not
+changed in any way. However, if there are issues with the code, they would come
+up within the application, say like the `/news` endpoint returning a failure
+status code. Any other issues that would have to do with connecting to the site
+or the application itself would more likely have to do with Docker, AWS, or
+Kubernetes.
+
+There are also pytests to help diagnose any application issues. If those pass
+then the logic of the application itself is not the issue.
+
+### Common Bugs
+
+The most common bug that may occur at the application level is missing an API
+key. The application grabs an API key labeled `NEWS_API_KEY` from the
+environment using the `os` package. There are different solutions for this
+depending on what level you are running the API at. If you are running locally,
+then you need to add a `.env` file that includes the API key name. There is an
+`example.env` provided in the repository.
 
 ## Docker
 

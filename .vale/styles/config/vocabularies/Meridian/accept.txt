@@ -41,6 +41,7 @@ prettier
 Prometheus
 pyproject
 pytest
+pytests
 (?i)repo
 repos
 ruff
@@ -52,6 +53,7 @@ subcommands
 toolchain
 toolchains
 truthy
+(?i)url
 uv
 venv
 virtualenv
