@@ -265,4 +265,82 @@ if you want more than just healthy/unhealthy.
 
 ## AWS
 
+### What Is It
+
+AWS is a cloud provider which provides two services that matter for this
+project: **ECR** (Elastic Container Registry), which stores Docker images so
+they can be pulled from anywhere, and **EC2** (Elastic Compute Cloud), which
+provisions virtual machine instances to actually run those images.
+
+### How We Use It
+
+The `push` stage in `.gitlab-ci.yml` only runs on `main`, after `build` has
+produced `image.tar`. This is so that the ECR is not flooded with constant
+changes but also so that the credentials necessary to push to AWS are protected.
+It logs into ECR, tags the image with both the short commit SHA and `latest`,
+then pushes both tags:
+
+```bash
+aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login \
+  --username AWS --password-stdin \
+  "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com"
+
+docker push "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/meridian-web-application:$CI_COMMIT_SHORT_SHA"
+docker push "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/meridian-web-application:latest"
+```
+
+`$AWS_ACCOUNT_ID` and `$AWS_DEFAULT_REGION` are masked GitLab CI variables, so
+you won't see the real values sitting in the pipeline logs.
+
+The EC2 instance is set up to pull from ECR using an IAM role attached directly
+to it, not a static access key, so you shouldn't need to configure any
+credentials on the instance itself.
+
+### How To Run It
+
+This process is handled by the GitLab pipeline automatically whenever a branch
+is merged. You will most likely not have to manually push to the ECR. However if
+you need to, this is how you would.
+
+SSH into the instance (you should have Meridian's AWS key), then:
+
+```bash
+aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login \
+  --username AWS --password-stdin \
+  "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com"
+
+docker pull "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/meridian-web-application:latest"
+docker run -d -p 8080:5000 --env-file .env \
+  "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/meridian-web-application:latest"
+```
+
+### How To Diagnose It
+
+Check the instance is actually running, from the console or CLI:
+
+```bash
+aws ec2 describe-instance-status --instance-ids <instance-id>
+```
+
+If it's up but you can't reach the app, SSH in and check the container the same
+way I covered in the Docker chapter (`docker ps`, `docker logs`). If you can't
+reach the instance at all, check the security group allows inbound traffic on
+whatever port you're testing.
+
+### Common Bugs
+
+- **`no basic auth credentials` / pull denied from ECR**: the instance's IAM
+  role doesn't have ECR read permission, or it's not attached anymore. This
+  should already be set up correctly, so if you hit this, something changed — go
+  check the instance's attached role in the EC2 console.
+- **Architecture mismatch**: same problem as in Docker. If you build locally on
+  Apple Silicon and push manually, it'll fail on EC2's `amd64` with an
+  `exec format error`. You won't hit this with anything CI pushes.
+- **Disk full**: `t3.micro` doesn't have much disk. If you're pulling manually
+  and not cleaning up, you'll fill it. `docker system prune` gets the space
+  back.
+- **Instance stopped**: I sometimes stop the instance to save cost. If you can't
+  reach the app and it shows `stopped` instead of `running`, start it before you
+  go looking for any other problem.
+
 ## Kubernetes
