@@ -52,6 +52,7 @@ subcommand
 subcommands
 toolchain
 toolchains
+traceback
 truthy
 (?i)url
 uv

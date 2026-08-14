@@ -11,6 +11,8 @@ This runbook makes some assumptions:
   EC2, and Kubernetes
 - You understand basic linux commands and how to use a terminal, as well as
   knowledge in installing Python and any Python packages
+- You have access to my AWS account, in this context that account would be
+  Meridian's account
 
 This runbook contains information necessary to run this application split into 4
 chapters:
@@ -165,6 +167,101 @@ You will also need to add that key to CI variable in GitLab and as a secret in
 Kubernetes.
 
 ## Docker
+
+### What Is It
+
+Docker packages up the application and everything it needs to run into one
+image, so it runs the same whether you're on your laptop, in CI, or on EC2. It
+acts as a way for the application to remain the same even if used on a different
+machine.
+
+### How We Use It
+
+`Dockerfile` at the repo root builds from `python:3.14.3-slim`, installs
+`requirements.txt` and the project itself, then drops down to a non-root user
+`(appuser, uid 1000)` instead of running as root. The container exposes port
+`5000` and runs the app with gunicorn:
+
+```dockerfile
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "src.app.app:app"]
+```
+
+There is also a `HEALTHCHECK` that curls `/health` internally every 30 seconds,
+so you can see `healthy` or `unhealthy` right in `docker ps` without having to
+go check yourself. It will only mark `healthy` if there is an API key present in
+the environment, another check to ensure proper use.
+
+`compose.yaml` wraps this up for the local developer. It builds the image, maps
+your host's port `8080` to the container's `5000`, and passes through two
+environment variables from your shell or a `.env` file: `ENV` and
+`NEWS_API_KEY`.
+
+### How To Run It
+
+From the repo root, with a `.env` file in place (see `example.env` for what it
+needs):
+
+```bash
+docker compose up --build
+```
+
+Check it came up healthy:
+
+```bash
+docker ps
+curl http://localhost:8080/health
+```
+
+If you want to run it without compose to test the image the same way CI builds
+it:
+
+```bash
+docker build -t meridian-web-application .
+docker run -p 8080:5000 --env-file .env meridian-web-application
+```
+
+### How To Diagnose It
+
+```bash
+docker ps
+```
+
+Check the `STATUS` column. `healthy` means `/health` is responding inside the
+container. `unhealthy` means the app came up but `/health` is failing.
+`Restarting` or an immediate exit means it never came up at all.
+
+```bash
+docker logs <container-id>
+```
+
+This should be your first move for anything unhealthy or exited. If there's a
+Python traceback, you'll find it here.
+
+```bash
+docker inspect --format='{{json .State.Health}}' <container-id>
+```
+
+This gives you the last few health check results directly, including the output,
+if you want more than just healthy/unhealthy.
+
+### Common Bugs
+
+- **Port already in use**: It is possible that port `8080` is already bound on
+  your machine somehow. The simplest fix for this is to change the host-side
+  port in `compose.yaml`.
+
+  For reference on the ports: `<host port>:<container port>`
+
+- **Missing environment variables**: if you don't have `NEWS_API_KEY` set, the
+  container will still start, but `/news` — and `/health` along with it, since
+  it checks dependent endpoints — will fail. Check your `.env` file actually
+  exists and is populated.
+- **Architecture mismatch**: if you build on Apple Silicon (`arm64`), that image
+  won't run on the `amd64` EC2 instance. CI builds on `amd64` runners, so you'll
+  only hit this if you build and push manually from a Mac.
+- **Permission errors writing files**: the container runs as `appuser`, not
+  root. If you ever add code that writes to disk somewhere new, you'll get a
+  permissions error in the logs — plan for that ahead of time.
 
 ## AWS
 
