@@ -161,6 +161,9 @@ depending on what level you are running the API at. If you are running locally,
 then you need to add a `.env` file that includes the API key name. There is an
 `example.env` provided in the repository.
 
+You will also need to add that key to CI variable in GitLab and as a secret in
+Kubernetes.
+
 ## Docker
 
 ## AWS
