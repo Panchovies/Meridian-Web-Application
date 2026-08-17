@@ -467,6 +467,12 @@ alongside Prometheus itself, Alertmanager, and the exporters that feed them.
 
 ### How We Use It
 
+To begin, apply the `meridian-grafana-dashboard-configmap.yaml` file:
+
+```bash
+kubectl apply -f meridian-grafana-dashboard-configmap.yaml
+```
+
 Grafana isn't exposed outside the cluster, so you reach it by port-forwarding:
 
 ```bash

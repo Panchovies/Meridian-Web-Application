@@ -1,5 +1,9 @@
 # Meridian Capital Markets Python Web Application
 
+## Runbook
+
+A runbook for this project exists in the root directory at Runbook.md
+
 ## Endpoints
 
 ### `/health`
