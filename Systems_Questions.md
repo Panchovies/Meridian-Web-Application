@@ -162,3 +162,9 @@ signal anything. Every dashboard besides pod resets spiked; however something
 interesting I noticed was that while CPU and HTTP request rate went back to
 their original values, memory stayed at the same position after peaking, long
 after there were no more get requests.
+
+## Monday, August 17th
+
+### What does eksctl create?
+
+### Control plane vs worker nodes

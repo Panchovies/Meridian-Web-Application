@@ -16,6 +16,7 @@ data's
 Dockerfile
 docstring
 docstrings
+eksctl
 formatter
 formatters
 gitignored
