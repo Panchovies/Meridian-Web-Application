@@ -2,7 +2,8 @@
 
 ## Runbook
 
-A runbook for this project exists in the root directory at Runbook.md
+A runbook for this project exists in the root directory at
+[Runbook.md](https://gitlab.com/mcm-delivery-service-26-08/francisco_zenklusen_w1/-/blob/main/Runbook.md)
 
 ## Endpoints
 
