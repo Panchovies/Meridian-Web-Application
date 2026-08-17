@@ -75,7 +75,7 @@ build:
   # README, Stage 2: Build. Taken From Anish's Repository.
   rules:
     - changes:
-        - main.py
+        - src/**/*
         - requirements.txt
         - Dockerfile
         - .dockerignore
@@ -99,7 +99,7 @@ push:
     # README, Stage 3: Push. Taken From Anish's Repository.
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       changes:
-        - main.py
+        - src/**/*
         - requirements.txt
         - Dockerfile
         - .dockerignore
