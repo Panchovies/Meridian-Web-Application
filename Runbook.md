@@ -14,7 +14,7 @@ This runbook makes some assumptions:
 - You have access to my AWS account, in this context that account would be
   Meridian's account
 
-This runbook contains information necessary to run this application split into 4
+This runbook contains information necessary to run this application split into 6
 chapters:
 
 - Working Within This Repo
@@ -23,6 +23,8 @@ chapters:
 - AWS
 - Kubernetes
 - Grafana
+
+With an additional chapter at the end covering basic Kubernetes "How To"
 
 This runbook follows a certain pattern for each of the chapters (excluding
 Working Within This Repo):
@@ -573,3 +575,115 @@ Then check **Status → Targets** at `http://localhost:9090` and look for
 - **`kubectl port-forward` connection drops**: this is a live connection tied to
   your terminal session: closing the terminal, sleeping your laptop, or the pod
   restarting will kill it. Just re-run the port-forward command.
+
+## Kubernetes How To
+
+### How to check whether the application is running
+
+To check if the application is running, use:
+
+```bash
+kubectl get pods
+```
+
+This will display all active pods at the moment of request. Pods will have a
+status in the third column. If the status displays "RUNNING", then the
+application is running.
+
+### How to read recent pod logs
+
+To check the last 100 pod logs of a deployment, use
+
+```bash
+kubectl logs deployment/meridian-web-application --tail=100
+```
+
+This will show what is happening in a pod as well as what time it occurred
+
+This will also show you errors that occurred in the pods
+
+### How to check resource utilization
+
+Grafana will visualize all the resource utilization you need to be monitoring
+(CPU, Memory)
+
+### What to do when all pods are in a crash loop
+
+Check the logs as referred to above. However, many times something goes wrong
+before the logs are able to show it. If that is the case, use
+
+```bash
+kubectl describe pod <pod-name>
+```
+
+and scroll down to the `Events` section. This will show you specific errors that
+occurred. Looks for things like:
+
+- App crashes on startup: missing or malformed environment variable, bad config,
+  unhandled exception at import time. Logs from --previous will usually show a
+  stack trace.
+- Failing liveness probe: the app starts but the health check endpoint isn't
+  responding in time, so Kubernetes kills and restarts it repeatedly.
+  `describe pod` will show liveness probe failed events.
+- Missing Secret or ConfigMap: if the pod can't mount a referenced
+  Secret/ConfigMap, it may crash before your app code even runs.
+- Resource limits too low: if the container is OOMKilled, describe pod will show
+  Reason: OOMKilled instead of a normal exit.
+
+Fix the underlying cause, then let Kubernetes retry, or force a fresh rollout:
+
+```bash
+kubectl rollout restart deployment/meridian-web-application
+```
+
+### What to do when the application returns 500s
+
+Start with recent logs to see the actual error and traceback:
+
+```bash
+kubectl logs deployment/meridian-web-application --tail=100
+```
+
+If the errors are intermittent, tail logs live while reproducing:
+
+```bash
+kubectl logs deployment/meridian-web-application -f
+```
+
+Then check `/health` directly to see if the app considers itself healthy, versus
+a downstream dependency being the problem:
+
+```bash
+kubectl exec -it <pod-name> -- curl localhost:<port>/health
+```
+
+Open the Grafana dashboard and check the error rate and latency panels — a spike
+aligned with a specific timestamp usually points to a bad deploy, a downstream
+dependency (e.g. NewsAPI) going down, or a resource crunch (CPU/memory maxing
+out and slowing request handling).
+
+Questions to narrow it down:
+
+- Did this start right after a deploy? If so, its likely a code or config
+  regression, consider rolling back.
+- Is it every request or only some? If some, then its likely a specific
+  downstream call or edge case failing.
+- Are CPU/memory graphs pegged in Grafana? If so, then its resource exhaustion,
+  not a code bug.
+
+### How to roll back to a previous version
+
+Kubernetes has a built in rollback function for deployments with distinct,
+immutable tags (which if you're pulling from the ECR, they do):
+
+```bash
+kubectl rollout undo deployment/meridian-web-application
+```
+
+Then watch the rollout to confirm it completes:
+
+```bash
+kubectl rollout status deployment/meridian-web-application
+```
+
+Then verify by checking the pods and the `/health` endpoint.

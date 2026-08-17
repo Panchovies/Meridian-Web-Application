@@ -51,6 +51,7 @@ pytest
 pytests
 (?i)repo
 repos
+rollout
 ruff
 (?i)runbook
 runbooks
