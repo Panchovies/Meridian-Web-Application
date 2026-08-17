@@ -162,3 +162,21 @@ signal anything. Every dashboard besides pod resets spiked; however something
 interesting I noticed was that while CPU and HTTP request rate went back to
 their original values, memory stayed at the same position after peaking, long
 after there were no more get requests.
+
+## Monday, August 17th
+
+### What does eksctl create?
+
+eksctl creates the control plane as well as the EKS cluster in the repository's
+region with managed clusters. It also creates 2 separate cloud formation stacks
+for the cluster and the managed nodegroup. The node group is comprised of 2
+`t3.small` EC2 instances. It also adds 4 addons: `vpc-cni`, `kube-proxy`,
+`coredns`, and `metrics-server` after the nodegroup was created. It also updated
+my `kubeconfig`, so kubectl points at the cluster.
+
+### Control plane vs worker nodes
+
+The control plane is the brain of Kubernetes, fully managed by AWS so we never
+have to do anything with it. The worker nodes, however, are the EC2 instances
+that run the container/application. We are in charge of what goes on in them,
+however, since they are managed, they still are capable of self-healing.
