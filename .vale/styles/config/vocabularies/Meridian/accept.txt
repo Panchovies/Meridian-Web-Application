@@ -2,6 +2,7 @@
 #
 # Add a term here when it is correct and Vale does not know it. Do not add a
 # word to silence a genuine typo.
+addons
 Alertmanager
 allowlist
 Atlassian
@@ -41,6 +42,7 @@ minikube
 mypy
 namespace
 namespaces
+nodegroup
 noqa
 OOMKilled
 pastebin
