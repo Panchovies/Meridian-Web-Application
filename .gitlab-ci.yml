@@ -71,6 +71,14 @@ build:
   variables:
     ECR_REPOSITORY: meridian-web-application
     DOCKER_TLS_CERTDIR: '/certs'
+  # Only rebuild when a file that actually ends up in the image changed. See
+  # README, Stage 2: Build. Taken From Anish's Repository.
+  rules:
+    - changes:
+        - main.py
+        - requirements.txt
+        - Dockerfile
+        - .dockerignore
   script:
     - docker build -t "$ECR_REPOSITORY:$CI_COMMIT_SHORT_SHA" .
     - docker save "$ECR_REPOSITORY:$CI_COMMIT_SHORT_SHA" -o image.tar
@@ -86,7 +94,15 @@ push:
   services:
     - docker:dind
   rules:
+    # Only after merging with main
+    # Only rebuild when a file that actually ends up in the image changed. See
+    # README, Stage 3: Push. Taken From Anish's Repository.
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        - main.py
+        - requirements.txt
+        - Dockerfile
+        - .dockerignore
   variables:
     ECR_REPOSITORY: meridian-web-application
     DOCKER_TLS_CERTDIR: '/certs'

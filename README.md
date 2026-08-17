@@ -235,12 +235,12 @@ Performs code quality and static analysis checks, including:
 Runs the project's **pytest** suite to verify that existing and newly added
 tests pass successfully.
 
-### Build
+### Build (Only when application code is changed)
 
 Builds the Docker image to ensure the application can be packaged without
-errors.
+errors. Artifacts that image to be used later by the push stage.
 
-### Push (Only on default [main] branch)
+### Push (Only on default [main] branch and when application code is changed)
 
 Authenticates with **Amazon ECR** and verifies that the Docker image can be
-pushed successfully.
+pushed successfully. Uses the artifact created in the build stage.
