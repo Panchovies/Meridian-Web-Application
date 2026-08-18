@@ -26,6 +26,7 @@ gitleaks
 Grafana
 gunicorn
 hardcoded
+hostname
 Jira
 kubectl
 Kubernetes
@@ -34,7 +35,7 @@ linter
 linters
 linux
 liveness
-loadbalencer
+(?i)loadbalencer
 lockfile
 lockfiles
 markdownlint
@@ -44,7 +45,7 @@ mypy
 namespace
 namespaces
 nodegroup
-nodeport
+(?i)nodeport
 noqa
 OOMKilled
 pastebin

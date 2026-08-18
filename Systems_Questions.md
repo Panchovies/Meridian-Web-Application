@@ -185,4 +185,39 @@ however, since they are managed, they still are capable of self-healing.
 
 ### What happens when you change from nodeport to loadbalencer?
 
+NodePort opens a static port on every worker's own IP. This means that the
+person attempting to access the node must know the IP as well as the port
+assigned to it. This does not function as well when using EKS due to the fact
+that there are multiple worker nods and their IP are not stable. Usually they
+are not even reachable publicly by design, so while a NodePort could work, it
+would be realistically impossible to reach it.
+
+LoadBalancer, on the other hand, tells Kubernetes to provision an AWS Elastic
+LoadBalancer. This manages all the traffic and IP tracking, giving you a real
+DNS hostname to use rather than tracking the IP manually. LoadBalancer itself
+actually uses NodePort mechanics but publicly users and clients interact with
+the LoadBalancer.
+
 ### From internet request to Flask process
+
+From hop to hop:
+
+The client looks up the URL, which resolves to public IP addresses owned by the
+LoadBalancer.
+
+The client hops to the LoadBalancer, and the security group must allow it to
+pass or the connection gets dropped.
+
+LoadBalancer hops to the node, where the LoadBalancer opens a new TCP connection
+to an EC2 worker node. The worker node is connected to a NodePort that
+Kubernetes auto-allocated when creating everything.
+
+Node hops to pod, this comes from the receiving node to the pod's IP.
+
+Pod hops to container, specifically the container port of 5000, established in
+the manifests.
+
+Container hops to `gunicorn`, which is the server running the application.
+
+`guinicorn` hops to the Flask app and flask matches the endpoint to the ones
+already built.
