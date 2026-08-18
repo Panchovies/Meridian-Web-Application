@@ -356,7 +356,7 @@ the image itself. Locally, I run it on minikube.
 
 ### How We Use It
 
-This repository uses 4 different manifests:
+This repository uses 4 different manifests, all located in the `k8s` directory:
 
 - **`deployment.yaml`**: runs 2 replicas. It is set up with a rolling update
   (`maxUnavailable: 0`, `maxSurge: 1`), so a new pod comes up before an old one
@@ -400,7 +400,7 @@ kubectl create secret generic meridian-api-keys \
 Apply the manifests:
 
 ```bash
-kubectl apply -f configmap.yaml -f deployment.yaml -f service.yaml
+kubectl apply -f k8s/*
 ```
 
 Check it's up and reach it:
@@ -472,7 +472,7 @@ alongside Prometheus itself, Alertmanager, and the exporters that feed them.
 To begin, apply the `meridian_dashboard.yaml` file:
 
 ```bash
-kubectl apply -f meridian_dashboard.yaml
+kubectl apply -f k8s/meridian_dashboard.yaml
 ```
 
 Grafana isn't exposed outside the cluster, so you reach it by port-forwarding:
