@@ -34,6 +34,7 @@ linter
 linters
 linux
 liveness
+loadbalencer
 lockfile
 lockfiles
 markdownlint
@@ -43,6 +44,7 @@ mypy
 namespace
 namespaces
 nodegroup
+nodeport
 noqa
 OOMKilled
 pastebin

@@ -180,3 +180,9 @@ The control plane is the brain of Kubernetes, fully managed by AWS so we never
 have to do anything with it. The worker nodes, however, are the EC2 instances
 that run the container/application. We are in charge of what goes on in them,
 however, since they are managed, they still are capable of self-healing.
+
+## Tuesday, August 18th
+
+### What happens when you change from nodeport to loadbalencer?
+
+### From internet request to Flask process
