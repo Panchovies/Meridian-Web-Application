@@ -4,4 +4,4 @@ metadata:
   name: meridian-web-application-config
 data:
   PORT: '5000'
-  ENVIRONMENT: 'development'
+  ENVIRONMENT: 'production'
