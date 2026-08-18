@@ -400,7 +400,7 @@ kubectl create secret generic meridian-api-keys \
 Apply the manifests:
 
 ```bash
-kubectl apply -f k8s/*
+kubectl apply -f k8s/
 ```
 
 Check it's up and reach it:
