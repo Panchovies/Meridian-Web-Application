@@ -6,6 +6,7 @@ stages:
   - checks
   - build
   - push
+  - deploy
 
 variables:
   # gitleaks scans history and commitlint needs the merge-request commit range;
