@@ -7,6 +7,7 @@ stages:
   - build
   - push
   - deploy
+  - smoke
 
 variables:
   # gitleaks scans history and commitlint needs the merge-request commit range;
@@ -193,3 +194,63 @@ deploy:
     # but the manifests were not, it will force a rollout restart
     - kubectl apply -f k8s/app/
     - kubectl rollout restart deployment/meridian-web-application
+
+smoke:
+  stage: smoke
+  needs: ['deploy']
+  image: amazon/aws-cli:2
+
+  before_script:
+    # Install curl and kubectl
+    - yum install -y curl unzip
+
+    - curl -LO "https://dl.k8s.io/release/$(curl -L -s
+      https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+    - install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
+    # Configure access to EKS
+    - aws eks update-kubeconfig --region "$AWS_DEFAULT_REGION" --name
+      "$EKS_CLUSTER_NAME"
+
+  script:
+    - |
+      echo "Waiting for Load Balancer..."
+
+      for i in $(seq 1 30); do
+        LB_HOST=$(kubectl get service meridian-web-application \
+          -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+
+        if [ -n "$LB_HOST" ]; then
+          echo "Load Balancer: $LB_HOST"
+          break
+        fi
+
+        echo "Load Balancer not ready yet ($i/30)"
+        sleep 10
+      done
+
+      if [ -z "$LB_HOST" ]; then
+        echo "ERROR: Load Balancer did not receive an external hostname."
+        exit 1
+      fi
+
+      echo "Running smoke test against http://$LB_HOST/health..."
+
+      for i in $(seq 1 30); do
+        STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+          --connect-timeout 5 \
+          --max-time 10 \
+          "http://$LB_HOST/health" || true)
+
+        echo "Attempt $i/30: HTTP $STATUS"
+
+        if [ "$STATUS" = "200" ]; then
+          echo "Smoke test passed."
+          exit 0
+        fi
+
+        sleep 10
+      done
+
+      echo "ERROR: Health check did not return HTTP 200."
+      exit 1
