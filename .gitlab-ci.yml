@@ -132,7 +132,7 @@ push:
       "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY:latest"
 
 # Deploys new application to cluster when application code changes are made
-# The cluster MUST be running for this to work, has to be run manually
+# The cluster MUST be running AND the NewsAPI key MUST be in the secrets for this to work, has to be run manually
 # Remember to delete LoadBalancer and then cluster after this stage has been run
 deploy:
   stage: deploy
@@ -187,8 +187,6 @@ deploy:
         echo "ERROR: Cannot reach EKS cluster '$EKS_CLUSTER_NAME'. Is it running? See RUNBOOK.md to start it before deploying."
         exit 1
       fi
-    - kubectl create secret generic meridian-api-keys
-      --from-literal=NEWS_API_KEY="$NEWS_API_KEY"
 
   script:
     # Applies the manifests, however on the possibility that the application code was changed
