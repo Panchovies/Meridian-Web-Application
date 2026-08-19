@@ -131,50 +131,50 @@ push:
     - docker push
       "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY:latest"
 
-  # Deploys new application to cluster when application code changes are made
-  # The cluster MUST be running for this to work, has to be run manually
-  # Remember to delete LoadBalancer and then cluster after this stage has been run
-  deploy:
-    stage: deploy
-    needs:
-      # If push needs to send an image, deploy will wait for push
-      # If push does not need to send an image but deploy does need to deploy
-      # (like if there is a manifest change but no application change) then
-      # deploy will still deploy without waiting for a stage that never happens
-      - job: push
-        optional: true
-    rules:
-      # Only automatically runs after merging with main
-      # Can manually run if on a protected branch
-      - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-        changes:
-          - k8s/**/*
-          - src/**/*
-          - requirements.txt
-          - Dockerfile
-          - .dockerignore
-      - if: $CI_COMMIT_REF_PROTECTED == "true"
-        when: manual
-        changes:
-          - k8s/**/*
-          - src/**/*
-          - requirements.txt
-          - Dockerfile
-          - .dockerignore
-    before_script:
-      - apk add --no-cache aws-cli curl
-      - curl -Lo /usr/local/bin/kubectl "https://dl.k8s.io/release/$(curl -L -s
-        https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-      - chmod +x /usr/local/bin/kubectl
-      - aws eks update-kubeconfig --region "$AWS_DEFAULT_REGION" --name
-        "$EKS_CLUSTER_NAME"
-      - |
-        if ! kubectl cluster-info --request-timeout=10s > /dev/null 2>&1; then
-          echo "ERROR: Cannot reach EKS cluster '$EKS_CLUSTER_NAME'. Is it running? See RUNBOOK.md to start it before deploying."
-          exit 1
-        fi
-    script:
-      # Applies the manifests, however on the possibility that the application code was changed
-      # but the manifests were not, it will force a rollout restart
-      - kubectl apply -f k8s/
-      - kubectl rollout restart deployment/meridian-web-application
+# Deploys new application to cluster when application code changes are made
+# The cluster MUST be running for this to work, has to be run manually
+# Remember to delete LoadBalancer and then cluster after this stage has been run
+deploy:
+  stage: deploy
+  needs:
+    # If push needs to send an image, deploy will wait for push
+    # If push does not need to send an image but deploy does need to deploy
+    # (like if there is a manifest change but no application change) then
+    # deploy will still deploy without waiting for a stage that never happens
+    - job: push
+      optional: true
+  rules:
+    # Only automatically runs after merging with main
+    # Can manually run if on a protected branch
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        - k8s/**/*
+        - src/**/*
+        - requirements.txt
+        - Dockerfile
+        - .dockerignore
+    - if: $CI_COMMIT_REF_PROTECTED == "true"
+      when: manual
+      changes:
+        - k8s/**/*
+        - src/**/*
+        - requirements.txt
+        - Dockerfile
+        - .dockerignore
+  before_script:
+    - apk add --no-cache aws-cli curl
+    - curl -Lo /usr/local/bin/kubectl "https://dl.k8s.io/release/$(curl -L -s
+      https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+    - chmod +x /usr/local/bin/kubectl
+    - aws eks update-kubeconfig --region "$AWS_DEFAULT_REGION" --name
+      "$EKS_CLUSTER_NAME"
+    - |
+      if ! kubectl cluster-info --request-timeout=10s > /dev/null 2>&1; then
+        echo "ERROR: Cannot reach EKS cluster '$EKS_CLUSTER_NAME'. Is it running? See RUNBOOK.md to start it before deploying."
+        exit 1
+      fi
+  script:
+    # Applies the manifests, however on the possibility that the application code was changed
+    # but the manifests were not, it will force a rollout restart
+    - kubectl apply -f k8s/
+    - kubectl rollout restart deployment/meridian-web-application
