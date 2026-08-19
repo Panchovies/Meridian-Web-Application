@@ -221,3 +221,7 @@ Container hops to `gunicorn`, which is the server running the application.
 
 `guinicorn` hops to the Flask app and flask matches the endpoint to the ones
 already built.
+
+## Wednesday, August 19th
+
+### Tracing a code change from your local machine to the running application
