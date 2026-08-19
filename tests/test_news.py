@@ -84,7 +84,7 @@ def test_news_api_failure() -> None:
         response = client.get("/news?q=apple")
 
     assert response.status_code == HTTP_STATUS_INTERNAL_SERVER_ERROR
-    assert "Failed to fetch news articles" in response.get_json()["Error"]
+    assert response.get_json() == {"Error": "Failed to fetch news articles"}
 
 def test_news_api_non_ok_status() -> None:
     """Verify that a non-ok API response returns HTTP 500."""

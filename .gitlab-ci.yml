@@ -6,6 +6,8 @@ stages:
   - checks
   - build
   - push
+  - deploy
+  - smoke
 
 variables:
   # gitleaks scans history and commitlint needs the merge-request commit range;
@@ -94,10 +96,18 @@ push:
   services:
     - docker:dind
   rules:
-    # Only after merging with main
+    # Only automatically runs after merging with main
+    # Can manually run if on a protected branch
     # Only rebuild when a file that actually ends up in the image changed. See
     # README, Stage 3: Push. Taken From Anish's Repository.
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        - src/**/*
+        - requirements.txt
+        - Dockerfile
+        - .dockerignore
+    - if: $CI_COMMIT_REF_PROTECTED == "true"
+      when: manual
       changes:
         - src/**/*
         - requirements.txt
@@ -121,3 +131,133 @@ push:
       "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY:$CI_COMMIT_SHORT_SHA"
     - docker push
       "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY:latest"
+
+# Deploys new application to cluster when application code changes are made
+# The cluster MUST be running AND the NewsAPI key MUST be in the secrets for this to work, has to be run manually
+# Remember to delete LoadBalancer and then cluster after this stage has been run
+deploy:
+  stage: deploy
+  needs:
+    # If push needs to send an image, deploy will wait for push
+    # If push does not need to send an image but deploy does need to deploy
+    # (like if there is a manifest change but no application change) then
+    # deploy will still deploy without waiting for a stage that never happens
+    - job: push
+      optional: true
+  rules:
+    # Only automatically runs after merging with main
+    # Can manually run if on a protected branch
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        - k8s/app/**/*
+        - src/**/*
+        - requirements.txt
+        - Dockerfile
+        - .dockerignore
+    - if: $CI_COMMIT_REF_PROTECTED == "true"
+      when: manual
+      changes:
+        - k8s/app/**/*
+        - src/**/*
+        - requirements.txt
+        - Dockerfile
+        - .dockerignore
+  before_script:
+    # Install system dependencies
+    - apt-get update
+    - apt-get install -y curl unzip
+    - rm -rf /var/lib/apt/lists/*
+
+    # Install AWS CLI
+    - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o
+      "awscliv2.zip"
+    - unzip -q awscliv2.zip
+    - ./aws/install
+
+    # Install kubectl
+    - curl -LO "https://dl.k8s.io/release/$(curl -L -s
+      https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+    - install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
+    - aws eks update-kubeconfig --region "$AWS_DEFAULT_REGION" --name
+      "$EKS_CLUSTER_NAME"
+
+    # Checks if the cluster is active, fails if it isn't
+    - |
+      if ! kubectl cluster-info --request-timeout=10s > /dev/null 2>&1; then
+        echo "ERROR: Cannot reach EKS cluster '$EKS_CLUSTER_NAME'. Is it running? See RUNBOOK.md to start it before deploying."
+        exit 1
+      fi
+
+  script:
+    # Applies the manifests, however on the possibility that the application code was changed
+    # but the manifests were not, it will force a rollout restart
+    - kubectl apply -f k8s/app/
+    - kubectl rollout restart deployment/meridian-web-application
+
+smoke:
+  stage: smoke
+  needs: ['deploy']
+  before_script:
+    # Install system dependencies
+    - apt-get update
+    - apt-get install -y curl unzip
+    - rm -rf /var/lib/apt/lists/*
+
+    # Install AWS CLI
+    - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o
+      "awscliv2.zip"
+    - unzip -q awscliv2.zip
+    - ./aws/install
+
+    # Install kubectl
+    - curl -LO "https://dl.k8s.io/release/$(curl -L -s
+      https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+    - install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
+    # Configure access to EKS
+    - aws eks update-kubeconfig --region "$AWS_DEFAULT_REGION" --name
+      "$EKS_CLUSTER_NAME"
+
+  script:
+    - |
+      echo "Waiting for Load Balancer..."
+
+      for i in $(seq 1 30); do
+        LB_HOST=$(kubectl get service meridian-web-application \
+          -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+
+        if [ -n "$LB_HOST" ]; then
+          echo "Load Balancer: $LB_HOST"
+          break
+        fi
+
+        echo "Load Balancer not ready yet ($i/30)"
+        sleep 10
+      done
+
+      if [ -z "$LB_HOST" ]; then
+        echo "ERROR: Load Balancer did not receive an external hostname."
+        exit 1
+      fi
+
+      echo "Running smoke test against http://$LB_HOST/health..."
+
+      for i in $(seq 1 30); do
+        STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+          --connect-timeout 5 \
+          --max-time 10 \
+          "http://$LB_HOST/health" || true)
+
+        echo "Attempt $i/30: HTTP $STATUS"
+
+        if [ "$STATUS" = "200" ]; then
+          echo "Smoke test passed."
+          exit 0
+        fi
+
+        sleep 10
+      done
+
+      echo "ERROR: Health check did not return HTTP 200."
+      exit 1
