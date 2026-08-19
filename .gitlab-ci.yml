@@ -162,14 +162,10 @@ deploy:
         - Dockerfile
         - .dockerignore
   before_script:
-    - curl -fsSL 'https://awscli.amazonaws.com/v2/install.sh' | bash
-
-    - curl -Lo kubectl "https://dl.k8s.io/release/$(curl -L -s
+    - dnf install -y awscli
+    - curl -LO "https://dl.k8s.io/release/$(curl -L -s
       https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-    - chmod +x kubectl
-    - mkdir -p "$HOME/bin"
-    - mv kubectl "$HOME/bin/kubectl"
-    - export PATH="$HOME/bin:$PATH"
+    - install -m 0755 kubectl /usr/local/bin/kubectl
 
     - aws eks update-kubeconfig --region "$AWS_DEFAULT_REGION" --name
       "$EKS_CLUSTER_NAME"
