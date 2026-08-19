@@ -162,12 +162,19 @@ deploy:
         - Dockerfile
         - .dockerignore
   before_script:
-    - apk add --no-cache aws-cli curl
-    - curl -Lo /usr/local/bin/kubectl "https://dl.k8s.io/release/$(curl -L -s
+    - curl -fsSL 'https://awscli.amazonaws.com/v2/install.sh' | bash
+
+    - curl -Lo kubectl "https://dl.k8s.io/release/$(curl -L -s
       https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-    - chmod +x /usr/local/bin/kubectl
+    - chmod +x kubectl
+    - mkdir -p "$HOME/bin"
+    - mv kubectl "$HOME/bin/kubectl"
+    - export PATH="$HOME/bin:$PATH"
+
     - aws eks update-kubeconfig --region "$AWS_DEFAULT_REGION" --name
       "$EKS_CLUSTER_NAME"
+
+    # Checks if the cluster is active, fails if it isn't
     - |
       if ! kubectl cluster-info --request-timeout=10s > /dev/null 2>&1; then
         echo "ERROR: Cannot reach EKS cluster '$EKS_CLUSTER_NAME'. Is it running? See RUNBOOK.md to start it before deploying."
