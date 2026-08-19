@@ -58,7 +58,7 @@ def get_news() -> tuple:
                              HTTP_STATUS_API_ERROR)
 
     except requests.RequestException:
-        return (jsonify({"Error: Failed to fetch news articles"}),
+        return (jsonify({"Error": "Failed to fetch news articles"}),
                 HTTP_STATUS_INTERNAL_SERVER_ERROR)
 
     return (jsonify(response.get("articles", [])), HTTP_STATUS_OK)
