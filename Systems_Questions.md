@@ -221,3 +221,30 @@ Container hops to `gunicorn`, which is the server running the application.
 
 `guinicorn` hops to the Flask app and flask matches the endpoint to the ones
 already built.
+
+## Wednesday, August 19th
+
+### Tracing a code change from your local machine to the running application
+
+- Code changes in the application code.
+- Code is saved and added to be committed
+- Code is committed and pushed
+- Once that code is merged into the default branch, the pipeline runs
+- First the `checks` stage
+- If that passes, the `build` stage starts since application code was changed
+- `build` creates a new image, then artifacts it for `push`
+- If `build` stage passes, `push` starts
+- `push` grabs that artifact and authenticates using the keys in GitLab (this is
+  why the branch must be a protected branch)
+- `push` tags the image with the SHA commit code and sends to the ECR
+- If push passes, then the `deploy` stage runs
+- `deploy` installs `aws-cli` and `kubectl` in a different manner from `push`
+  because it is not using a Docker image
+- `deploy` checks to see if the cluster is up and fails if it isn't
+- `deploy` applies the manifests but since there is no change in those nothing
+  happens
+- That is where the `rollout restart` command comes in to force a rolling update
+  and force Kubernetes to find the latest image
+- That image is used in the pods which try to start one at a time, only
+  replacing the old pods if the pods are healthy and running
+- The pods are replaced and the web application updates
