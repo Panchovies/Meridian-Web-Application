@@ -108,11 +108,6 @@ push:
         - .dockerignore
     - if: $CI_COMMIT_REF_PROTECTED == "true"
       when: manual
-      changes:
-        - src/**/*
-        - requirements.txt
-        - Dockerfile
-        - .dockerignore
   variables:
     ECR_REPOSITORY: meridian-web-application
     DOCKER_TLS_CERTDIR: '/certs'
@@ -156,12 +151,6 @@ deploy:
         - .dockerignore
     - if: $CI_COMMIT_REF_PROTECTED == "true"
       when: manual
-      changes:
-        - k8s/app/**/*
-        - src/**/*
-        - requirements.txt
-        - Dockerfile
-        - .dockerignore
   before_script:
     # Install system dependencies
     - apt-get update
@@ -198,6 +187,18 @@ deploy:
 smoke:
   stage: smoke
   needs: ['deploy']
+  rules:
+    # Only automatically runs after merging with main
+    # Can manually run if on a protected branch
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        - k8s/app/**/*
+        - src/**/*
+        - requirements.txt
+        - Dockerfile
+        - .dockerignore
+    - if: $CI_COMMIT_REF_PROTECTED == "true"
+      when: manual
   before_script:
     # Install system dependencies
     - apt-get update
@@ -247,7 +248,7 @@ smoke:
         STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
           --connect-timeout 5 \
           --max-time 10 \
-          "http://$LB_HOST/health" || true)
+          "http://$LB_HOST/news" || true)
 
         echo "Attempt $i/30: HTTP $STATUS"
 
