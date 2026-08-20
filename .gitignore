@@ -28,5 +28,8 @@ htmlcov/
 \#*\#
 node_modules/
 
+# Bash Scripts
+load_tester.sh
+
 # Manual Deployment Script Variables
-.deploy_var
+k8s/app/.deploy_var
