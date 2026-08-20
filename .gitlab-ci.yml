@@ -198,6 +198,24 @@ deploy:
 smoke:
   stage: smoke
   needs: ['deploy']
+  rules:
+    # Only automatically runs after merging with main
+    # Can manually run if on a protected branch
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        - k8s/app/**/*
+        - src/**/*
+        - requirements.txt
+        - Dockerfile
+        - .dockerignore
+    - if: $CI_COMMIT_REF_PROTECTED == "true"
+      when: manual
+      changes:
+        - k8s/app/**/*
+        - src/**/*
+        - requirements.txt
+        - Dockerfile
+        - .dockerignore
   before_script:
     # Install system dependencies
     - apt-get update
