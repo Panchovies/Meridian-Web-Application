@@ -108,6 +108,11 @@ push:
         - .dockerignore
     - if: $CI_COMMIT_REF_PROTECTED == "true"
       when: manual
+      changes:
+        - src/**/*
+        - requirements.txt
+        - Dockerfile
+        - .dockerignore
   variables:
     ECR_REPOSITORY: meridian-web-application
     DOCKER_TLS_CERTDIR: '/certs'
