@@ -55,7 +55,7 @@ echo "Configuring Pod Identity to CloudWatch..."
 aws eks create-pod-identity-association --cluster-name meridian-cluster \
     --namespace amazon-cloudwatch \
     --service-account cloudwatch-agent \
-    --role-arn arn:aws:iam::163558211438:role/CloudWatchObservabilityRole-meridian  \
+    --role-arn arn:aws:iam::<YOUR_AWS_ID>:role/CloudWatchObservabilityRole-meridian  \
     --region us-east-1
 
 echo "Cluster is set up with CloudWatch! Wait approx 5 minutes for insights to show on AWS"

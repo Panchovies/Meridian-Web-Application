@@ -433,7 +433,8 @@ everything up back to its original state.
 
 All of the setup commands exist within an example shell script called
 `cluster_runner_example.sh`. Before running it, you must replace the example API
-key with an actual API key from [NewsAPI](https://newsapi.org/).
+key with an actual API key from [NewsAPI](https://newsapi.org/) and replace the
+placeholder account ID with your AWS account ID
 
 Running this shell script from the root of the repo will:
 
