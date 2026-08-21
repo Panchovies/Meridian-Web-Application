@@ -1,5 +1,42 @@
 # Runbook For Meridian Web Application
 
+## If Something Is Down And Needs Immediate Attention, Start Here
+
+If the app is down and you don't have time to read the whole runbook, run these
+three commands in order. The first one tells you whether you're looking at a
+cluster problem or an application problem — everything after that depends on
+which one it is.
+
+**1. `kubectl get nodes`**
+
+This tells you if the cluster itself is healthy.
+
+- If any node is **not** `Ready` → this is a **cluster problem**. Skip the
+  app-debugging steps below and go straight to the eksctl section of this
+  runbook (node/cluster health, scaling, rebuild).
+- If all nodes are `Ready` → the cluster is fine, this is an **application
+  problem**. Continue to step 2.
+
+**2. `kubectl get pods -A`**
+
+Now that you know the cluster's healthy, find out what's actually broken. Look
+for anything that isn't `Running` or `Completed` — `CrashLoopBackOff`,
+`ImagePullBackOff`, `Pending`, or a pod with a high `RESTARTS` count.
+
+**3. `kubectl rollout undo deployment/meridian-web-application`**
+
+If step 2 shows the app pods are the problem (crashing, not starting, failing
+readiness), don't debug live at 2am — roll back first, restore service, then
+debug the root cause later with a clear head. Confirm it worked with
+`kubectl rollout status deployment/meridian-web-application`.
+
+If the pods look healthy but the app is still unreachable from outside (rollback
+didn't help), the issue is likely the LoadBalancer/Service rather than the pods
+— check `kubectl get service` for the `EXTERNAL-IP` and move to the networking
+section instead.
+
+## Runbook Guide
+
 This runbook exists for those who will be in charge of this repository to give
 guidance into what the app is, how to run it, how to diagnose issues, and how to
 fix any issues that may come up.
@@ -8,7 +45,7 @@ This runbook makes some assumptions:
 
 - You are a competent software engineer
 - You have little to no experience in the following: Flask, Docker, AWS, ECR,
-  EC2, Kubernetes, minikube, and Grafana
+  EC2, EKS, Kubernetes, and eksctl
 - You understand basic linux commands and how to use a terminal, as well as
   knowledge in installing Python and any Python packages
 - You have access to my AWS account, in this context that account would be
@@ -22,9 +59,7 @@ chapters:
 - Docker
 - AWS
 - Kubernetes
-- Grafana
-
-With an additional chapter at the end covering basic Kubernetes "How To"
+- eksctl
 
 This runbook follows a certain pattern for each of the chapters (excluding
 Working Within This Repo):
@@ -37,7 +72,7 @@ Working Within This Repo):
 
 ## Working Within This Repo
 
-### Branching And Commits
+### Merge Request Workflow
 
 Anytime a change must be made to the repo, it should always be done on a
 separate branch, then once the code has been peer-reviewed by at least two
@@ -45,41 +80,8 @@ developers, it can be merged to `main`. `main` should NEVER be pushed to
 directly. There are reasons for these checks, abide by them so that mistakes
 won't be permanent.
 
-Branches should be named with this structure: `type/changes`.
-
-Commits should be named with this structure:
-`type(optional scope): description`.
-
-Types are as follows:
-
-`feat`: adds a capability the service did not have
-
-`fix`: corrects broken behavior
-
-`docs`: changes documentation only
-
-`test`: adds or corrects tests, with no production-code change
-
-`refactor`: restructures code without changing what it does
-
-`build`: changes packaging, dependencies, or the container
-
-`ci`: changes the pipeline
-
-`chore`: is none of the above and affects no shipped behavior
-
-### Merge Requests
-
-When creating a merge request, follow the template given and fill out the 4
-categories:
-
-`Jira`: Link your Jira ticket
-
-`Describe`: Describe changes made; should be in the imperative
-
-`Test`: Explain the testing that was done before merging
-
-`Justify`: Justify any tradeoffs made while making changes
+For more information and branch/commit structure, read the Confluence page on
+[Merge Request Workflow](https://meridian-capital-markets-delivery-services.atlassian.net/wiki/spaces/DS/pages/2686978/Merge+Request+Workflow)
 
 ### Pre-commit
 
@@ -117,33 +119,8 @@ There are three endpoints used in this application:
 
 ### How To Run It
 
-Clone the repository, then create and activate a virtual environment:
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-```
-
-Install dependencies:
-
-```bash
-uv pip install -r requirements.txt
-```
-
-Start the application:
-
-```bash
-python app.py
-```
-
-The server will start at `http://localhost:5000`. You can check the endpoint
-with:
-
-```bash
-curl http://localhost:5000/health
-```
-
-or by visiting that URL in a browser.
+Information on running the application through Python can be found in the
+[README](https://gitlab.com/mcm-delivery-service-26-08/francisco_zenklusen_w1/-/blob/main/README.md)
 
 ### How To Diagnose It
 
@@ -186,7 +163,7 @@ machine.
 `5000` and runs the app with gunicorn:
 
 ```dockerfile
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "src.app.app:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--timeout", "30", "src.app.app:app"]
 ```
 
 There is also a `HEALTHCHECK` that curls `/health` internally every 30 seconds,
@@ -201,27 +178,8 @@ environment variables from your shell or a `.env` file: `ENV` and
 
 ### How To Run It
 
-From the repo root, with a `.env` file in place (see `example.env` for what it
-needs):
-
-```bash
-docker compose up --build
-```
-
-Check it came up healthy:
-
-```bash
-docker ps
-curl http://localhost:8080/health
-```
-
-If you want to run it without compose to test the image the same way CI builds
-it:
-
-```bash
-docker build -t meridian-web-application .
-docker run -p 8080:5000 --env-file .env meridian-web-application
-```
+Information on running the application through Docker can be found in the
+[README](https://gitlab.com/mcm-delivery-service-26-08/francisco_zenklusen_w1/-/blob/main/README.md)
 
 ### How To Diagnose It
 
@@ -266,14 +224,12 @@ if you want more than just healthy/unhealthy.
   root. If you ever add code that writes to disk somewhere new, you'll get a
   permissions error in the logs — plan for that ahead of time.
 
-## AWS
+## ECR
 
 ### What Is It
 
-AWS is a cloud provider which provides two services that matter for this
-project: **ECR** (Elastic Container Registry), which stores Docker images so
-they can be pulled from anywhere, and **EC2** (Elastic Compute Cloud), which
-provisions virtual machine instances to actually run those images.
+ECR or Elastic Container Registry stores Docker images in a cloud to be pulled
+to use remotely.
 
 ### How We Use It
 
@@ -319,16 +275,12 @@ docker run -d -p 8080:5000 --env-file .env \
 
 ### How To Diagnose It
 
-Check the instance is actually running, from the console or CLI:
+Check that the Docker images are actually stored in ECR, either by viewing the
+repository and its images in the AWS Console, or by using the AWS CLI:
 
 ```bash
-aws ec2 describe-instance-status --instance-ids <instance-id>
+aws ecr list-images --repository-name <repository-name>
 ```
-
-If it's up but you can't reach the app, SSH in and check the container the same
-way I covered in the Docker chapter (`docker ps`, `docker logs`). If you can't
-reach the instance at all, check the security group allows inbound traffic on
-whatever port you're testing.
 
 ### Common Bugs
 
@@ -352,233 +304,38 @@ whatever port you're testing.
 
 Kubernetes runs multiple copies of the app, restarts them if they fail, rolls
 out new versions without downtime, and keeps config and secrets separate from
-the image itself. Locally, I run it on minikube.
+the image itself. It is run through EKS.
 
 ### How We Use It
 
-This repository uses 4 different manifests, all located in the `k8s` directory:
+This repository uses 3 different manifests, all located in the `k8s/app`
+directory:
 
 - **`deployment.yaml`**: runs 2 replicas. It is set up with a rolling update
   (`maxUnavailable: 0`, `maxSurge: 1`), so a new pod comes up before an old one
   goes away — you should never have zero available replicas during a deploy.
   Both `livenessProbe` and `readinessProbe` hit `/health` on port `5000`. Config
   and secrets get pulled in wholesale via `envFrom`, grabbing every key from the
-  `meridian-web-application-config` ConfigMap and the `meridian-api-keys` Secret
-  as environment variables. Resource `requests` are `128Mi`/`250m` CPU; `limits`
-  are `256Mi`/`500m` CPU. `imagePullPolicy: Never` on the Deployment means
-  Kubernetes won't try to pull `meridian-web-application:local` from anywhere,
-  meaning it must be sitting in the node's local image cache. so much.
-- **`service.yaml`**: a `NodePort` Service, exposing the Deployment on port `80`
-  internally and `30080` on the node itself, forwarding to container port
-  `5000`.
+  `configmap.yaml` ConfigMap and the `meridian-api-keys` Secret as environment
+  variables. Resource `requests` are `128Mi`/`250m` CPU; `limits` are
+  `256Mi`/`500m` CPU. `imagePullPolicy: Always` on the Deployment means
+  Kubernetes tries to pull `meridian-web-application:latest` from the ECR.
+- **`service.yaml`**: a `LoadBalancer` Service, exposing the Deployment on port
+  `80` internally and targeting container port `5000`. Uses HTTP and adds an
+  annotation to allow HTTP metrics to be sent to CloudWatch
 - **`configmap.yaml`**: non-secret config — just `PORT` and `ENVIRONMENT`.
-- **`meridian_service_monitor.yaml`**: tells Prometheus (via the Prometheus
-  Operator) to scrape `/metrics` every 15 seconds. This only works if you've
-  already got the Prometheus Operator and a release labeled `monitoring`
-  installed in your cluster.
 
 ### How To Run It
 
-Start minikube and point your shell's Docker client at minikube's own Docker
-daemon, so the image you build ends up somewhere the cluster can actually see
-it, then build:
+It runs on it's own after being applied through kubectl:
 
 ```bash
-minikube start
-eval $(minikube docker-env) # This must be run once per terminal session if you want to build a new image
-docker build -t meridian-web-application:local .
+kubectl apply -f k8s/app/
 ```
 
-I never committed the secret to the repo, so you'll need to create it by hand
-once before the Deployment will come up healthy:
-
-```bash
-kubectl create secret generic meridian-api-keys \
-  --from-literal=NEWS_API_KEY='your-key-here'
-```
-
-Apply the manifests:
-
-```bash
-kubectl apply -f k8s/
-```
-
-Check it's up and reach it:
-
-```bash
-kubectl get pods
-minikube service meridian-web-application --url
-```
+This is handled in the `cluster_runner.sh` script
 
 ### How To Diagnose It
-
-```bash
-kubectl get pods
-```
-
-`Running` with `2/2` (or however many containers) ready is what you want.
-Anything else — `CrashLoopBackOff`, `ImagePullBackOff`, `0/1` ready — send you
-to one of the next two commands.
-
-```bash
-kubectl describe pod <pod-name>
-```
-
-Check the events at the bottom, look for errors like probe failures, image pull
-errors, scheduling failures. I usually reach for this before logs, since it
-tells you _why_ a pod isn't ready rather than just what the app printed.
-
-```bash
-kubectl logs <pod-name>
-```
-
-Same idea as `docker logs`, just for a pod. Add `--previous` if the container
-already restarted and you need to see why it crashed last time, not what it's
-printing now.
-
-### Common Bugs
-
-- **`ImagePullBackOff` right after `minikube start`**: you built the image with
-  your regular Docker daemon instead of minikube's. Run
-  `eval $(minikube docker-env)` in the same shell you're building in, then
-  rebuild. You'll have to do this every time you open a new terminal — it
-  doesn't stick around.
-- **`CreateContainerConfigError` mentioning `meridian-api-keys`**: the Secret
-  was never created, or you deleted it. Re-run the `kubectl create secret`
-  command above.
-- **Readiness flapping / pod bouncing between ready and not ready**: I set the
-  readiness probe to `initialDelaySeconds: 0` and `failureThreshold: 1` — it
-  starts checking right away and only tolerates one failure. If the app is slow
-  to bind on startup, you'll see it get marked not-ready before it's had a real
-  chance. Compare that against the liveness probe's more forgiving
-  `initialDelaySeconds: 10` if you think this is what's happening.
-- **`/metrics` not showing up in Prometheus**: the `ServiceMonitor`'s
-  `namespaceSelector` is hardcoded to `default`, and its `release: monitoring`
-  label has to match however you installed the Prometheus Operator. If either
-  one is off for your cluster, Prometheus just won't scrape it — no error,
-  you'll just notice the data's missing.
-
-## Grafana
-
-### What Is It
-
-Grafana is the dashboard on top of Prometheus's data. Prometheus scrapes and
-stores the metrics; Grafana is where you actually look at them. I installed it
-as part of the `kube-prometheus-stack` Helm chart in the `monitoring` namespace,
-alongside Prometheus itself, Alertmanager, and the exporters that feed them.
-
-### How We Use It
-
-To begin, apply the `meridian_dashboard.yaml` file:
-
-```bash
-kubectl apply -f k8s/meridian_dashboard.yaml
-```
-
-Grafana isn't exposed outside the cluster, so you reach it by port-forwarding:
-
-```bash
-kubectl port-forward -n monitoring svc/monitoring-grafana 3000:80
-```
-
-Helm generates a random admin password rather than defaulting to something
-guessable. Get it with:
-
-```bash
-kubectl get secret -n monitoring monitoring-grafana \
-  -o jsonpath="{.data.admin-password}" | base64 -d
-```
-
-Username is `admin`. Open `http://localhost:3000` and log in.
-
-The chart ships a curated set of dashboards from the `kubernetes-mixin` project
-(per-pod resources, namespace-wide resources, networking, node-level stats),
-plus one I built myself specifically for Meridian, with 4 panels:
-
-#### Panel 1 — CPU Utilization
-
-```promql
-sum(rate(container_cpu_usage_seconds_total{namespace="default", pod=~"meridian.*"}[5m])) by (pod)
-```
-
-CPU usage per pod, in cores. The underlying metric is a cumulative counter, so
-this uses `rate()` over a 5-minute window to turn it into a per-second average —
-a raw counter just climbs forever and isn't useful to graph directly. Check this
-first if a pod feels slow and you suspect it's CPU-bound.
-
-#### Panel 2 — Memory Utilization
-
-```promql
-sum(container_memory_working_set_bytes{namespace="default", pod=~"meridian.*"}) by (pod)
-```
-
-Memory usage per pod. Uses `working_set_bytes` rather than `usage_bytes`
-specifically because working set is what the OOM killer actually evaluates — it
-excludes reclaimable page cache, so it's the more honest number for "how close
-is this pod to getting OOMKilled." Compare against the `256Mi` limit set in
-`deployment.yaml`.
-
-#### Panel 3 — Pod Restart Count
-
-```promql
-kube_pod_container_status_restarts_total{namespace="default", pod=~"meridian.*"}
-```
-
-Cumulative restarts per pod over time. Deliberately not rated — for restarts you
-want the raw step pattern (a line that jumps means "this pod restarted around
-this time"), since a rate of restarts is noisier and harder to read at a glance.
-If you're chasing a crash loop, this tells you when it started and whether it's
-ongoing.
-
-#### Panel 4 — HTTP Request Rate
-
-```promql
-sum(rate(flask_http_request_total{app="meridian"}[5m])) by (method, status)
-```
-
-Request rate broken down by HTTP method and status code. This comes from
-`prometheus-flask-exporter`, which I added to the app to expose a `/metrics`
-endpoint — without it, Prometheus only sees infrastructure-level metrics (CPU,
-memory, restarts) and has no idea what `/news` or `/health` are doing. This is
-the panel to check for a 500s incident: a spike in the `5xx` status series here
-confirms it's happening and roughly how often.
-
-### How To Diagnose It
-
-If a panel is empty or flat when it shouldn't be, first confirm Prometheus is
-actually scraping Meridian. Port-forward into Prometheus itself:
-
-```bash
-kubectl port-forward -n monitoring svc/monitoring-kube-prometheus-prometheus 9090:9090
-```
-
-Then check **Status → Targets** at `http://localhost:9090` and look for
-`meridian-monitor`. It should show as `UP`. If it's missing entirely or shows
-`DOWN`, the problem is upstream of Grafana — see the Common Bugs below.
-
-### Common Bugs
-
-- **Dashboard panels are empty, but Prometheus itself is running**: almost
-  always the `release: monitoring` label on `meridian_service_monitor.yaml`. The
-  Prometheus Operator only watches `ServiceMonitor` objects carrying the label
-  matching its own Helm release name (`monitoring`, in our case). Get this wrong
-  and the `ServiceMonitor` is silently ignored — no error anywhere, the data
-  just never shows up.
-- **Panel 4 specifically is empty, but 1–3 are fine**: Panels 1–3 come from
-  infrastructure-level metrics (cAdvisor, kube-state-metrics), which exist
-  regardless of what Meridian's code does. Panel 4 depends on Meridian itself
-  exposing `/metrics` via `prometheus-flask-exporter`. If that's missing from
-  the running image, Panel 4 will be empty while the rest work fine.
-- **Can't log in / forgot the password**: don't try to reset it manually — just
-  re-run the `kubectl get secret` command above. Helm doesn't rotate it, so the
-  same command works every time.
-- **`kubectl port-forward` connection drops**: this is a live connection tied to
-  your terminal session: closing the terminal, sleeping your laptop, or the pod
-  restarting will kill it. Just re-run the port-forward command.
-
-## Kubernetes How To
-
-### How to check whether the application is running
 
 To check if the application is running, use:
 
@@ -590,27 +347,17 @@ This will display all active pods at the moment of request. Pods will have a
 status in the third column. If the status displays "RUNNING", then the
 application is running.
 
-### How to read recent pod logs
-
 To check the last 100 pod logs of a deployment, use
 
 ```bash
 kubectl logs deployment/meridian-web-application --tail=100
 ```
 
-This will show what is happening in a pod as well as what time it occurred
+This will show what is happening in a pod, what time it occurred, and what
+errors that occurred in the pods
 
-This will also show you errors that occurred in the pods
-
-### How to check resource utilization
-
-Grafana will visualize all the resource utilization you need to be monitoring
-(CPU, Memory)
-
-### What to do when all pods are in a crash loop
-
-Check the logs as referred to above. However, many times something goes wrong
-before the logs are able to show it. If that is the case, use
+Many times something goes wrong before the logs are able to show it. If that is
+the case, use
 
 ```bash
 kubectl describe pod <pod-name>
@@ -636,54 +383,216 @@ Fix the underlying cause, then let Kubernetes retry, or force a fresh rollout:
 kubectl rollout restart deployment/meridian-web-application
 ```
 
-### What to do when the application returns 500s
+### Common Bugs
 
-Start with recent logs to see the actual error and traceback:
+- **Application returning 500s**: Start with recent logs to see the actual error
+  and traceback. Then check `/health` directly to see if the app considers
+  itself healthy, versus a downstream dependency being the problem. If it is
+  every request, it is likely a specific downstream call or edge case. If there
+  are CPU alerts in CloudWatch, then it is resource exhaustion.
+- **`ImagePullBackOff`**: Kubernetes is unable to pull the image from the ECR.
+  This could be a permissions issue, an AWS credentials issue, or an issue with
+  the ECR. Try checking the logs of the GitLab pipeline when the files were
+  applied. Look for issues pertaining to the image itself.
+- **`CreateContainerConfigError` mentioning `meridian-api-keys`**: the Secret
+  was never created, or you deleted it. Re-run the `kubectl create secret`
+  command found in the `cluster_runner`.
+
+## eksctl
+
+### What Is It
+
+`eksctl` is a command-line tool for creating and managing Amazon EKS clusters.
+It simplifies many of the AWS and Kubernetes configuration steps required to set
+up an EKS cluster.
+
+### How We Use It
+
+We use `eksctl` to create our cluster from the command line as well as install
+Add-ons for CloudWatch. Once we create the cluster we can keep it running with
+all the nodes active, but this spends a lot of money in our AWS account. To
+reduce the spending while not actively testing or using, we can scale down the
+nodes using
 
 ```bash
-kubectl logs deployment/meridian-web-application --tail=100
+eksctl scale nodegroup --cluster meridian-cluster --name standard-workers --nodes 0 --nodes-min 0 --nodes-max 3
 ```
 
-If the errors are intermittent, tail logs live while reproducing:
+then to scale them back up
 
 ```bash
-kubectl logs deployment/meridian-web-application -f
+eksctl scale nodegroup --cluster meridian-cluster --name standard-workers --nodes 2 --nodes-min 1 --nodes-max 3
 ```
 
-Then check `/health` directly to see if the app considers itself healthy, versus
-a downstream dependency being the problem:
+We can also delete the cluster to reduce as much spending as possible, however
+this gets rid of all our Add-ons, changes the hostname for whenever we decide to
+recreate, and when we do recreate the cluster it takes a long time to set
+everything up back to its original state.
+
+### How To Run It
+
+All of the setup commands exist within an example shell script called
+`cluster_runner_example.sh`. Before running it, you must replace the example API
+key with an actual API key from [NewsAPI](https://newsapi.org/) and replace the
+placeholder account ID with your AWS account ID
+
+Running this shell script from the root of the repo will:
+
+- Create the cluster with two `t3.small` type managed nodes
+- Update `kubectl` to point at the cluster
+- Add the API key to `meridian-api-keys`
+- Apply the manifests in `k8s/app/`
+- Add the necessary Add-ons to use CloudWatch
+
+This reduces the amount of work needed to start the cluster significantly.
+
+You can find the hostname for the application by running:
 
 ```bash
-kubectl exec -it <pod-name> -- curl localhost:<port>/health
+kubectl get service
 ```
 
-Open the Grafana dashboard and check the error rate and latency panels — a spike
-aligned with a specific timestamp usually points to a bad deploy, a downstream
-dependency (e.g. NewsAPI) going down, or a resource crunch (CPU/memory maxing
-out and slowing request handling).
+and entering the URL under the `EXTERNAL-IP` column for `TYPE` `LoadBalancer`.
 
-Questions to narrow it down:
+**Important**: Make sure you start the URL with `http`, not `https`, as this
+runs insecurely on port 80.
 
-- Did this start right after a deploy? If so, its likely a code or config
-  regression, consider rolling back.
-- Is it every request or only some? If some, then its likely a specific
-  downstream call or edge case failing.
-- Are CPU/memory graphs pegged in Grafana? If so, then its resource exhaustion,
-  not a code bug.
+There is also a shell script called `cluster_stopper.sh` which deletes the
+LoadBalancer and then the cluster. Recommended to only delete the cluster if
+there will be multiple days when it is not in use.
 
-### How to roll back to a previous version
+### How We Diagnose It
 
-Kubernetes has a built in rollback function for deployments with distinct,
-immutable tags (which if you're pulling from the ECR, they do):
+#### Check cluster health
+
+Start by confirming the nodes are up and ready:
+
+```bash
+kubectl get nodes
+```
+
+Look for `STATUS` = `Ready` on every node. If a node is `NotReady`, give it a
+couple minutes (it may still be joining), then check
+`kubectl describe node <node-name>` for the reason under `Conditions`.
+
+Next, check that all pods across all namespaces are healthy:
+
+```bash
+kubectl get pods -A
+```
+
+You want everything `Running` or `Completed`. Anything stuck in `Pending`,
+`CrashLoopBackOff`, `ImagePullBackOff`, or with high `RESTARTS` needs a closer
+look — run `kubectl describe pod <pod-name> -n <namespace>` and check the
+`Events` section at the bottom.
+
+#### Roll back a bad deployment
+
+If a new deploy is broken (crashing pods, failing health checks, bad app
+behavior), roll back to the previous working revision instead of debugging live:
 
 ```bash
 kubectl rollout undo deployment/meridian-web-application
 ```
 
-Then watch the rollout to confirm it completes:
+This reverts to the previous ReplicaSet. Confirm it worked:
 
 ```bash
 kubectl rollout status deployment/meridian-web-application
 ```
 
-Then verify by checking the pods and the `/health` endpoint.
+To roll back further than one revision, check history first with
+`kubectl rollout history deployment/meridian-web-application`, then target a
+specific revision with
+`kubectl rollout undo deployment/meridian-web-application --to-revision=<N>`.
+
+#### Read application logs
+
+For a quick look at the current pod's logs:
+
+```bash
+kubectl logs <pod-name>
+```
+
+If the pod restarted and you need to see why it crashed, check the previous
+container's logs:
+
+```bash
+kubectl logs <pod-name> --previous
+```
+
+To tail logs live while reproducing an issue:
+
+```bash
+kubectl logs -f <pod-name>
+```
+
+If you don't know the pod name, list them first with
+`kubectl get pods -l app=meridian-web-application`, or stream logs across all
+pods for the deployment at once:
+
+```bash
+kubectl logs -f -l app=meridian-web-application --all-containers=true
+```
+
+For anything beyond a single pod's recent logs (historical logs, log search,
+logs after a pod has been deleted), use CloudWatch Container Insights — see the
+Observability section of this runbook.
+
+#### CloudWatch
+
+CloudWatch will be set up and ready to use if you ran the `cluster_runner.sh`
+script. Navigate to the AWS console and search for "CloudWatch". There will be 3
+alarms in place:
+
+- **CPU Utilization**: Alerts when cluster CPU utilization exceeds 80% for 5
+  consecutive minutes.
+- **High 5XX Rate**: Alerts when 5XX responses exceed 1% of total requests.
+- **Over 3 Restarts**: Alerts when total pod restarts across all pods are
+  over 3.
+
+### Common Bugs
+
+- **Deploy Stage Fails On Pipeline**: *
+
+Start by reading the job log in GitLab — the deploy stage fails at different
+points for different reasons, and the log tells you which:
+
+- **`kubectl` commands fail immediately (`connection refused`,
+  `Unable to connect to the server`)** — the runner can't reach the cluster.
+  Usually means the kubeconfig step didn't run or the cluster's API
+  endpoint/security group doesn't allow the runner's IP. Confirm the
+  `aws eks update-kubeconfig` step ran successfully earlier in the job.
+
+- **`kubectl apply` fails on a specific manifest** — read the error, it's almost
+  always a YAML syntax issue or an immutable field being changed (e.g.
+  `selector` on a Service). Fix the manifest in `k8s/app/` and re-run.
+
+- **`kubectl apply` succeeds but `rollout status` times out** — the new pods
+  aren't reaching `Ready`. This is the most common failure and isn't really a
+  pipeline problem, it's an app problem surfacing in the pipeline. Check:
+
+```bash
+  kubectl get pods -l app=meridian-web-application
+  kubectl describe pod <pod-name>
+  kubectl logs <pod-name>
+```
+
+Common causes: bad image tag (`ImagePullBackOff` — check ECR auth and that the
+SHA tag actually got pushed), app crashing on startup (`CrashLoopBackOff` —
+check logs for a stack trace), or a failing readiness probe (app is up but
+`/health` isn't returning 200 yet).
+
+- **`needs: [push]` related failure on a manifest-only commit** — the `push` job
+  is `optional: true` in `needs`, so a deploy triggered by a manifest change
+  alone (no image build) should still run. If it's failing here, check that the
+  `changes:` filter on the deploy stage still matches `k8s/app/**/*`.
+
+**If the rollout is broken and you need the app back up now**, don't wait on
+debugging — roll back:
+
+```bash
+kubectl rollout undo deployment/meridian-web-application
+```
+
+Then debug the bad manifest/image separately before re-deploying.

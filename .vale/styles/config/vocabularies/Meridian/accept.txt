@@ -28,6 +28,7 @@ gunicorn
 hardcoded
 hostname
 Jira
+kubeconfig
 kubectl
 Kubernetes
 lifecycle
