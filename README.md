@@ -112,7 +112,7 @@ pytest -v
 This runs the test suite, which checks that `/health` returns a 200 status code
 and that the response body contains the expected fields.
 
-## Running with Docker
+## Running with Dockerfile
 
 Docker runs the application using gunicorn, opposite to how it is run directly
 in Python. Docker also adds a health check that sends signals based on the
@@ -144,13 +144,6 @@ It is possible that if you are on a Mac, port 5000 will be in use. This will
 result in an "address is already in use" error when running the container. In
 that case, try using port 8080 or any other free port. Just switch the port
 number on the left-side of the colon to any number in the range of (1024-65535).
-
-```bash
-docker run -p <Any Free Port>:5000 meridian-application
-```
-
-The application can be accessed at `http://localhost:5000`, however if you
-choose to change the port, you must change the port number in the URL as well.
 
 ## Running with Docker Compose
 
@@ -200,8 +193,13 @@ Once the container is running, the API will be available at:
 http://localhost:8080
 ```
 
-This Docker Compose uses 8080 as the host port, you can change it in the .yaml
-file.
+### Troubleshooting
+
+It is possible that if you are on a Mac, port 5000 will be in use. This will
+result in an "address is already in use" error when running the container. In
+that case, try using port 8080 or any other free port. Just switch the port
+number on the left-side of the colon to any number in the range of (1024-65535)
+in the `compose.yaml`
 
 ### 4. Stop the application
 

@@ -30,6 +30,7 @@ node_modules/
 
 # Bash Scripts
 load_tester.sh
+cluster_runner.sh
 
 # Manual Deployment Script Variables
 k8s/app/.deploy_var
