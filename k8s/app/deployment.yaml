@@ -37,7 +37,7 @@ spec:
               port: 5000
             initialDelaySeconds: 15
             periodSeconds: 10
-            timeoutSeconds: 3
+            timeoutSeconds: 5
             failureThreshold: 5
           readinessProbe:
             httpGet:
@@ -45,7 +45,7 @@ spec:
               port: 5000
             initialDelaySeconds: 5
             periodSeconds: 5
-            timeoutSeconds: 3
+            timeoutSeconds: 5
             failureThreshold: 3
           # Determines resource requests and limits
           resources:
@@ -54,4 +54,4 @@ spec:
               cpu: '250m'
             limits:
               memory: '256Mi'
-              cpu: '500m'
+              cpu: '1000m'
