@@ -31,21 +31,30 @@ spec:
             - secretRef:
                 name: meridian-api-keys
           # Liveness and readiness probes for /health endpoint
-          livenessProbe:
+          startupProbe:
             httpGet:
               path: /health
               port: 5000
-            initialDelaySeconds: 15
-            periodSeconds: 10
+            periodSeconds: 5
             timeoutSeconds: 5
-            failureThreshold: 5
+            failureThreshold: 12
+
           readinessProbe:
             httpGet:
               path: /health
               port: 5000
             initialDelaySeconds: 5
-            periodSeconds: 5
-            timeoutSeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 10
+            failureThreshold: 3
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 15
+            timeoutSeconds: 10
             failureThreshold: 3
           # Determines resource requests and limits
           resources:
