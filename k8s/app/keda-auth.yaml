@@ -1,0 +1,8 @@
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: meridian-sqs-auth
+  namespace: default
+spec:
+  podIdentity:
+    provider: aws
