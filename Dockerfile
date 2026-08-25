@@ -17,4 +17,4 @@ EXPOSE 5000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"
 
-CMD ["python", "-m", "flask", "--app", "src.app.app", "run", "--host", "0.0.0.0", "--port", "5000"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--worker-class", "gthread", "--threads", "2", "src.app.app:app"]
