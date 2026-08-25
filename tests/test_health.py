@@ -44,6 +44,7 @@ def test_health_response_structure() -> None:
     assert "message" in data
     assert data["status"] == "ok"
 
+
 def test_health_missing_api_key() -> None:
     """Test the /health endpoint returns an error when NEWS_API_KEY is missing.
 
