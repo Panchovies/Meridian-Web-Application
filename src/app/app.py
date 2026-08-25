@@ -72,6 +72,7 @@ def health() -> tuple:
         a status message
         and a status code of 200
     """
+    return "OK", 200 # Remove later, only for testing
     date = datetime.now(UTC).isoformat()
     api_key = os.environ.get("NEWS_API_KEY")
     if not api_key:
