@@ -56,11 +56,12 @@ spec:
             periodSeconds: 15
             timeoutSeconds: 10
             failureThreshold: 3
+
           # Determines resource requests and limits
           resources:
             requests:
               memory: '128Mi'
-              cpu: '250m'
+              cpu: '100m'
             limits:
               memory: '256Mi'
-              cpu: '1000m'
+              cpu: '250m'
