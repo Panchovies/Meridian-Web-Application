@@ -10,7 +10,7 @@ from unittest.mock import patch
 
 from src.app.app import app
 from src.app.constants import (
-    # HTTP_STATUS_INTERNAL_SERVER_ERROR,
+    HTTP_STATUS_INTERNAL_SERVER_ERROR,
     HTTP_STATUS_OK,
 )
 
@@ -31,7 +31,7 @@ def test_health_response_structure() -> None:
         status
         timestamp
         message
-
+    """
     client = app.test_client()
 
     with patch.dict(os.environ, {"NEWS_API_KEY": "test_key"}):
@@ -43,7 +43,7 @@ def test_health_response_structure() -> None:
     assert "timestamp" in data
     assert "message" in data
     assert data["status"] == "ok"
-    """
+
 
 def test_health_missing_api_key() -> None:
     """Test the /health endpoint returns an error when NEWS_API_KEY is missing.
@@ -53,7 +53,7 @@ def test_health_missing_api_key() -> None:
         timestamp
         message
     and a status code of 500.
-
+    """
     client = app.test_client()
 
     with patch.dict(os.environ, {}, clear=True):
@@ -66,4 +66,3 @@ def test_health_missing_api_key() -> None:
     assert "message" in data
     assert data["status"] == "error"
     assert response.status_code == HTTP_STATUS_INTERNAL_SERVER_ERROR
-    """
