@@ -5,7 +5,7 @@ metadata:
   labels:
     app: meridian-web-application
 spec:
-  replicas: 2
+  # replicas: 2 ommited due to HPA overlap
   strategy:
     type: RollingUpdate
     rollingUpdate:
