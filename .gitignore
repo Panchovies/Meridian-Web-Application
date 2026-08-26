@@ -5,6 +5,7 @@ __pycache__/
 build/
 dist/
 http_crasher.py
+load_tester.py
 
 # Environments
 .venv/

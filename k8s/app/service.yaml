@@ -4,10 +4,8 @@ metadata:
   name: meridian-web-application
   labels:
     app: meridian-web-application
-  annotations:
-    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: 'http'
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   selector:
     app: meridian-web-application
   ports:
