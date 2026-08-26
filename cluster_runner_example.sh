@@ -89,3 +89,35 @@ aws eks update-addon \
   --configuration-values '{"containerInsights":{"enabled":true},"otelContainerInsights":{"enabled":true}}'
 
 echo "Cluster is set up with the ALB Controller and CloudWatch! Wait approx 5 minutes for insights to show on AWS"
+
+echo "Resolving ALB hostname from Ingress..."
+ 
+ALB_HOSTNAME=$(kubectl get ingress <ingress_name> -n <namespace> \
+  -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+ 
+echo "ALB hostname: $ALB_HOSTNAME"
+ 
+echo "Resolving ALB ARN suffix..."
+ 
+ALB_ARN=$(aws elbv2 describe-load-balancers \
+  --query "LoadBalancers[?DNSName=='${ALB_HOSTNAME}'].LoadBalancerArn" \
+  --output text)
+ 
+ALB_ARN_SUFFIX=$(echo "$ALB_ARN" | sed -E 's#.*loadbalancer/##')
+ 
+echo "ALB ARN suffix: $ALB_ARN_SUFFIX"
+
+echo "Deleting previous alarm if there"
+
+aws cloudwatch delete-alarms --alarm-names "High 5XX Rate"
+ 
+echo "Deploying meridian-alarms stack with updated ALB ARN suffix..."
+ 
+aws cloudformation deploy \
+  --stack-name meridian-alarms \
+  --template-file <path_to_alarm.yaml_file> \
+  --parameter-overrides AlbArnSuffix="$ALB_ARN_SUFFIX" \
+  --capabilities CAPABILITY_IAM \
+  --region <region>
+
+echo "Alarm stack deployed!"
