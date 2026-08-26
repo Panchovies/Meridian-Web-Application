@@ -230,7 +230,7 @@ smoke:
       echo "Waiting for Load Balancer..."
 
       for i in $(seq 1 30); do
-        LB_HOST=$(kubectl get service meridian-web-application \
+        LB_HOST=$(kubectl get ingress meridian-web-application \
           -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
 
         if [ -n "$LB_HOST" ]; then
