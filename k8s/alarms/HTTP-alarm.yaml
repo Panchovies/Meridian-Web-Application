@@ -1,0 +1,54 @@
+Parameters:
+  AlbArnSuffix:
+    Type: String
+    Description: 'ALB ARN suffix, e.g. app/k8s-meridian-xxxx/yyyyyyyyyyyy'
+
+Resources:
+  Alb5xxErrorRateAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: 'High 5XX Rate'
+      AlarmDescription: 'ALB 5XX error rate > 1%'
+      ComparisonOperator: GreaterThanThreshold
+      Threshold: 1
+      EvaluationPeriods: 2
+      DatapointsToAlarm: 2
+      TreatMissingData: notBreaching
+      Metrics:
+        - Id: m1
+          MetricStat:
+            Metric:
+              Namespace: AWS/ApplicationELB
+              MetricName: HTTPCode_Target_5XX_Count
+              Dimensions:
+                - Name: LoadBalancer
+                  Value: !Ref AlbArnSuffix
+            Period: 300
+            Stat: Sum
+          ReturnData: false
+        - Id: m2
+          MetricStat:
+            Metric:
+              Namespace: AWS/ApplicationELB
+              MetricName: HTTPCode_ELB_5XX_Count
+              Dimensions:
+                - Name: LoadBalancer
+                  Value: !Ref AlbArnSuffix
+            Period: 300
+            Stat: Sum
+          ReturnData: false
+        - Id: m3
+          MetricStat:
+            Metric:
+              Namespace: AWS/ApplicationELB
+              MetricName: RequestCount
+              Dimensions:
+                - Name: LoadBalancer
+                  Value: !Ref AlbArnSuffix
+            Period: 300
+            Stat: Sum
+          ReturnData: false
+        - Id: e1
+          Expression: '(m1 + m2) / m3 * 100'
+          Label: '5XX Error Rate (%)'
+          ReturnData: true
