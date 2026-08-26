@@ -6,11 +6,10 @@ This file defines a simple health check endpoint that returns:
     a status message
     a status code of 200, indicating the service is healthy
 """
-import os  # noqa: I001 REMOVE AFTER TESTING
+import os
 from datetime import UTC, datetime
 
 import requests
-from random import randint
 from flask import Flask, jsonify, request
 from prometheus_flask_exporter import PrometheusMetrics
 
@@ -73,9 +72,6 @@ def health() -> tuple:
         a status message
         and a status code of 200
     """
-    if (randint(1, 4) == 4): # noqa: PLR2004, S311 # REMOVE THESE 3 LINES AFTER TESTING
-        return "unhealthy", 500
-    return "healthy", 200
     date = datetime.now(UTC).isoformat()
     api_key = os.environ.get("NEWS_API_KEY")
     if not api_key:
