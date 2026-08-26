@@ -6,7 +6,6 @@ build/
 dist/
 http_crasher.py
 load_tester.py
-load_tester_curve.py
 
 # Environments
 .venv/

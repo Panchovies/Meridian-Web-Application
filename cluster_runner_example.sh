@@ -8,9 +8,9 @@ echo "Creating cluster..."
 eksctl create cluster --name meridian-cluster --region us-east-1 \
   --nodegroup-name standard-workers \
   --node-type t3.small \
-  --nodes 2 \
-  --nodes-min 1 \
-  --nodes-max 3 \
+  --nodes 4 \
+  --nodes-min 3 \
+  --nodes-max 5 \
   --managed
 
 echo "Cluster created! Updating kubeconfig..."
