@@ -52,7 +52,7 @@ def test_health_missing_api_key() -> None:
         status
         timestamp
         message
-    and a status code of 500.
+    and a status code of 500
     """
     client = app.test_client()
 

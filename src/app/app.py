@@ -5,6 +5,7 @@ This file defines a simple health check endpoint that returns:
     the current UTCtimestamp
     a status message
     a status code of 200, indicating the service is healthy
+    as well as checking for an API key
 """
 import os
 from datetime import UTC, datetime
