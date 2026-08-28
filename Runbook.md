@@ -30,11 +30,6 @@ readiness), don't debug live at 2am — roll back first, restore service, then
 debug the root cause later with a clear head. Confirm it worked with
 `kubectl rollout status deployment/meridian-web-application`.
 
-If the pods look healthy but the app is still unreachable from outside (rollback
-didn't help), the issue is likely the LoadBalancer/Service rather than the pods
-— check `kubectl get service` for the `EXTERNAL-IP` and move to the networking
-section instead.
-
 ## Runbook Guide
 
 This runbook exists for those who will be in charge of this repository to give
@@ -157,7 +152,7 @@ machine.
 
 ### How We Use It
 
-`Dockerfile` at the repo root builds from `python:3.14.3-slim`, installs
+`Dockerfile` at the repo root builds from `python:3.13-slim`, installs
 `requirements.txt` and the project itself, then drops down to a non-root user
 `(appuser, uid 1000)` instead of running as root. The container exposes port
 `5000` and runs the app with gunicorn:
@@ -415,13 +410,13 @@ reduce the spending while not actively testing or using, we can scale down the
 nodes using
 
 ```bash
-eksctl scale nodegroup --cluster meridian-cluster --name standard-workers --nodes 0 --nodes-min 0 --nodes-max 3
+eksctl scale nodegroup --cluster meridian-cluster --name standard-workers --nodes 0 --nodes-min 0 --nodes-max 5
 ```
 
 then to scale them back up
 
 ```bash
-eksctl scale nodegroup --cluster meridian-cluster --name standard-workers --nodes 2 --nodes-min 1 --nodes-max 3
+eksctl scale nodegroup --cluster meridian-cluster --name standard-workers --nodes 4 --nodes-min 3 --nodes-max 5
 ```
 
 We can also delete the cluster to reduce as much spending as possible, however
@@ -440,19 +435,21 @@ Running this shell script from the root of the repo will:
 
 - Create the cluster with two `t3.small` type managed nodes
 - Update `kubectl` to point at the cluster
+- Creates the AWS Load Balancer Controller
 - Add the API key to `meridian-api-keys`
 - Apply the manifests in `k8s/app/`
 - Add the necessary Add-ons to use CloudWatch
+- Restarts the `High 5XX Rate` alarm in CloudWatch to watch the correct metric
 
 This reduces the amount of work needed to start the cluster significantly.
 
 You can find the hostname for the application by running:
 
 ```bash
-kubectl get service
+kubectl get ingress
 ```
 
-and entering the URL under the `EXTERNAL-IP` column for `TYPE` `LoadBalancer`.
+and entering the URL under the `ADDRESS` column.
 
 **Important**: Make sure you start the URL with `http`, not `https`, as this
 runs insecurely on port 80.
@@ -464,6 +461,15 @@ there will be multiple days when it is not in use.
 ### How We Diagnose It
 
 #### Check cluster health
+
+There is a shell script `ops/health-check.sh` that checks the health of the full
+stack in sequence. It makes sure that kubectl can connect to the EKS cluster,
+that all expected pods are in Running state, that the AWS Load Balancer URL
+returns 200 from the health check endpoint, and that no CloudWatch alarms are
+currently in alarm state.
+
+Run it with `./ops/health-check.sh` and it will notify you if anything is
+unhealthy.
 
 Start by confirming the nodes are up and ready:
 
@@ -485,6 +491,39 @@ You want everything `Running` or `Completed`. Anything stuck in `Pending`,
 `CrashLoopBackOff`, `ImagePullBackOff`, or with high `RESTARTS` needs a closer
 look — run `kubectl describe pod <pod-name> -n <namespace>` and check the
 `Events` section at the bottom.
+
+#### Get Deployment Status
+
+A script `ops/deployment-status.py` is available to you and prints a formatted
+status report featuring the following:
+
+- Cluster name
+- Node count and status
+- Deployment name
+- Replica count
+- Current image tag deployed
+- Timestamp of the most recent deployment
+
+Run from root using `./ops/deployment-status.py`
+
+#### Get Pipeline Summary
+
+A script `ops/pipeline-summary.py` is available to you and prints the last five
+pipelines, their elapsed times, and the stages they failed at, if any.
+
+Requires a GitLab token with read permissions for Project, Pipeline, and Job
+
+GitLab token must be stored in a `.gitlab-token` file
+
+Run from root using `./ops/deployment-status.py`
+
+#### Delete Non-Running Pods
+
+A script `ops/restart-unhealthy-pods.sh` is available to you and deletes any
+pods that are not running. Not recommended to use if you just applied or
+restarted your deployment.
+
+Run from root using `./ops/restart-unhealthy-pods.sh`
 
 #### Roll back a bad deployment
 
