@@ -107,10 +107,6 @@ ALB_ARN_SUFFIX=$(echo "$ALB_ARN" | sed -E 's#.*loadbalancer/##')
  
 echo "ALB ARN suffix: $ALB_ARN_SUFFIX"
 
-echo "Deleting previous alarm if there"
-
-aws cloudwatch delete-alarms --alarm-names "High 5XX Rate"
- 
 echo "Deploying meridian-alarms stack with updated ALB ARN suffix..."
  
 aws cloudformation deploy \
