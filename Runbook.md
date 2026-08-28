@@ -152,7 +152,7 @@ machine.
 
 ### How We Use It
 
-`Dockerfile` at the repo root builds from `python:3.14.3-slim`, installs
+`Dockerfile` at the repo root builds from `python:3.13-slim`, installs
 `requirements.txt` and the project itself, then drops down to a non-root user
 `(appuser, uid 1000)` instead of running as root. The container exposes port
 `5000` and runs the app with gunicorn:
@@ -503,6 +503,17 @@ status report featuring the following:
 - Replica count
 - Current image tag deployed
 - Timestamp of the most recent deployment
+
+Run from root using `./ops/deployment-status.py`
+
+#### Get Pipeline Summary
+
+A script `ops/pipeline-summary.py` is available to you and prints the last five
+pipelines, their elapsed times, and the stages they failed at, if any.
+
+Requires a GitLab token with read permissions for Project, Pipeline, and Job
+
+GitLab token must be stored in a `.gitlab-token` file
 
 Run from root using `./ops/deployment-status.py`
 

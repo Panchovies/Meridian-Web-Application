@@ -57,6 +57,7 @@ def main() -> None:
         order_by="updated_at",
         sort="desc",
         per_page=PIPELINE_LIMIT,
+        get_all=False,
     )
 
     report = """
