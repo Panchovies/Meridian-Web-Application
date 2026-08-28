@@ -410,7 +410,7 @@ reduce the spending while not actively testing or using, we can scale down the
 nodes using
 
 ```bash
-eksctl scale nodegroup --cluster meridian-cluster --name standard-workers --nodes 0 --nodes-min 0 --nodes-max 0
+eksctl scale nodegroup --cluster meridian-cluster --name standard-workers --nodes 0 --nodes-min 0 --nodes-max 5
 ```
 
 then to scale them back up
