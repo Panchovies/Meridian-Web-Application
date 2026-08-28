@@ -8,7 +8,7 @@ if [ "$RESULT" = "arn:aws:eks:us-east-1:163558211438:cluster/meridian-cluster" ]
     echo "Kubectl is connected to meridian-cluster."
 else
     echo "Kubectl is not connected to meridian-cluster"
-    exit 0
+    exit 1
 fi
 
 echo "Are pods running?"
@@ -19,6 +19,7 @@ if [ "$RESULT" -gt 0 ]; then
     echo "Expected pods ($RESULT) running"
 else
     echo "No pods running"
+    exit 1
 fi
 
 echo "Load Balancer returns 200?"
