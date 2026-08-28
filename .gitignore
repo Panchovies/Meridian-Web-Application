@@ -35,3 +35,6 @@ cluster_runner.sh
 
 # Manual Deployment Script Variables
 k8s/app/.deploy_var
+
+# GitLab Tokens
+.gitlab-token
