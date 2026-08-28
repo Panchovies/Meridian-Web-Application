@@ -492,11 +492,27 @@ You want everything `Running` or `Completed`. Anything stuck in `Pending`,
 look — run `kubectl describe pod <pod-name> -n <namespace>` and check the
 `Events` section at the bottom.
 
+#### Get Deployment Status
+
+A script `ops/deployment-status.py` is available to you and prints a formatted
+status report featuring the following:
+
+- Cluster name
+- Node count and status
+- Deployment name
+- Replica count
+- Current image tag deployed
+- Timestamp of the most recent deployment
+
+Run from root using `./ops/deployment-status.py`
+
 #### Delete Non-Running Pods
 
 A script `ops/restart-unhealthy-pods.sh` is available to you and deletes any
 pods that are not running. Not recommended to use if you just applied or
 restarted your deployment.
+
+Run from root using `./ops/restart-unhealthy-pods.sh`
 
 #### Roll back a bad deployment
 
