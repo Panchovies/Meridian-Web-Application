@@ -251,18 +251,18 @@ already built.
 
 ## Monday, August 31st
 
-### What is Terraform State?
+### What is `Terraform` State?
 
-Terraform state is a file created when `terraform apply` is run that saves the
-state of what has been created, changed, or deleted. This allows for Terraform
+`Terraform` state is a file created when `terraform apply` is run that saves the
+state of what has been created, changed, or deleted. This allows for `Terraform`
 to know what needs to be deleted when destroying and what should not be
 recreated when applying.
 
 ### What happens when `terraform apply` is ran against the same infrastructure
 
 When `terraform apply` is run, a file is created called `terraform.tfstate`,
-which lets Terraform know the current state of what has been applied and
-created. This is so Terraform can keep track of what needs to be deleted as well
-as what does not need to be recreated. If two engineers run `terraform apply`,
-they won't be sharing the state file, leading to one of them attempting to
-recreate resources that have already been created.
+which lets `Terraform` know the current state of what has been applied and
+created. This is so `Terraform` can keep track of what needs to be deleted as
+well as what does not need to be recreated. If two engineers run
+`terraform apply`, they won't be sharing the state file, leading to one of them
+attempting to recreate resources that have already been created.
