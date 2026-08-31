@@ -10,3 +10,6 @@ dist/
 # Vale's downloaded styles are vendor files; formatting them creates noise
 # in every diff and helps nobody.
 .vale/styles/
+
+# Terraform state files should not be changed by Prettier
+terraform/*.tfstate*
