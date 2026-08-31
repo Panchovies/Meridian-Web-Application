@@ -31,8 +31,6 @@ node_modules/
 
 # Terraform
 **/.terraform/*
-*.tfstate
-*.tfstate.*
 crash.log
 crash.*.log
 *.tfvars
