@@ -248,3 +248,9 @@ already built.
 - That image is used in the pods which try to start one at a time, only
   replacing the old pods if the pods are healthy and running
 - The pods are replaced and the web application updates
+
+## Monday, August 31st
+
+### What is Terraform State?
+
+### What happens when terraform apply is ran against the same infrastructure
