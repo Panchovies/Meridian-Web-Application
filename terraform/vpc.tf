@@ -27,3 +27,18 @@ resource "aws_subnet" "public" {
     "kubernetes.io/role/elb"                     = "1"
   }
 }
+
+### Private subnets (same 2 AZs) ###
+
+resource "aws_subnet" "private" {
+  count             = length(var.availability_zones)
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = var.private_subnet_cidrs[count.index]
+  availability_zone = var.availability_zones[count.index]
+
+  tags = {
+    Name                                         = "${var.project_name}-private-${var.availability_zones[count.index]}"
+    "kubernetes.io/cluster/${var.cluster_name}"  = "shared"
+    "kubernetes.io/role/internal-elb"            = "1"
+  }
+}
