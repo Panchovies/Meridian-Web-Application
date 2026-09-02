@@ -15,7 +15,7 @@ resource "aws_eks_pod_identity_association" "aws_load_balancer_controller" {
 
   depends_on = [
     aws_eks_addon.pod_identity_agent,
-    aws_iam_role_policy_attachment.aws_load_balancer_controller
+    aws_iam_role_policy_attachment.aws_load_balancer_controller,
   ]
 }
 
@@ -29,6 +29,6 @@ resource "aws_eks_pod_identity_association" "cloudwatch_observability" {
 
   depends_on = [
     aws_eks_addon.pod_identity_agent,
-    aws_iam_role_policy_attachment.cloudwatch_observability
+    aws_iam_role_policy_attachment.cloudwatch_observability,
   ]
 }

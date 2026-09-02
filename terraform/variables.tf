@@ -13,6 +13,11 @@ variable "project_name" {
   type        = string
 }
 
+variable "application_service_name" {
+  description = "Kubernetes Service name for the application"
+  type        = string
+}
+
 variable "trade_data_bucket_name" {
   description = "Base name for the trade data S3 bucket (account ID is appended for uniqueness)"
   type        = string
