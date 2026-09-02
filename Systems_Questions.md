@@ -266,3 +266,7 @@ created. This is so `Terraform` can keep track of what needs to be deleted as
 well as what does not need to be recreated. If two engineers run
 `terraform apply`, they won't be sharing the state file, leading to one of them
 attempting to recreate resources that have already been created.
+
+## Wednesday, September 2nd
+
+### `terraform plan` vs `terraform apply`

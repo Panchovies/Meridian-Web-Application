@@ -1,3 +1,11 @@
+
+### CloudWatch  Log Group for EKS ###
+resource "aws_cloudwatch_log_group" "eks_cluster" {
+  # The name must exactly match the format EKS expects
+  name              = "/aws/eks/${var.cluster_name}/cluster"
+  retention_in_days = 14
+}
+
 ### EKS cluster ###
 ### Depends on vpc being up and running ###
 
@@ -15,8 +23,12 @@ resource "aws_eks_cluster" "main" {
     endpoint_public_access  = true
   }
 
+  enabled_cluster_log_types = ["api", "audit", "authenticator",
+   "controllerManager", "scheduler"]
+
   depends_on = [
     aws_iam_role_policy_attachment.eks_cluster_policy,
+    aws_cloudwatch_log_group.eks_cluster,
   ]
 }
 
@@ -44,5 +56,6 @@ resource "aws_eks_node_group" "main" {
     aws_iam_role_policy_attachment.eks_worker_node_policy,
     aws_iam_role_policy_attachment.eks_cni_policy,
     aws_iam_role_policy_attachment.eks_ecr_readonly,
+    aws_iam_role_policy_attachment.cloudwatch_agent,
   ]
 }
