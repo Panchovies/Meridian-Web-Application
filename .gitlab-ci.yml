@@ -237,6 +237,9 @@ smoke:
 
   script:
     - |
+      echo "Initializing Terraform..."
+      terraform -chdir=terraform init -input=false
+
       echo "Getting Load Balancer from Terraform output..."
 
       ALB_DNS_NAME=$(terraform -chdir=terraform output -raw load_balancer_dns_name)
