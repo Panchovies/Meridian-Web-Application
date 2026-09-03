@@ -71,7 +71,7 @@ build:
   services:
     - docker:dind
   variables:
-    ECR_REPOSITORY: meridian-web-application
+    ECR_REPOSITORY: terraform-meridian-web-application
     DOCKER_TLS_CERTDIR: '/certs'
   # Only rebuild when a file that actually ends up in the image changed. See
   # README, Stage 2: Build. Taken From Anish's Repository.
