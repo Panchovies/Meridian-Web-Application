@@ -81,6 +81,6 @@ resource "aws_security_group_rule" "nodes_from_alb" {
   from_port                = 5000
   to_port                  = 5000
   protocol                 = "tcp"
-  security_group_id        = aws_security_group.worker_nodes.id
+  security_group_id        = aws_eks_cluster.main.vpc_config[0].cluster_security_group_id
   source_security_group_id = aws_security_group.alb.id
 }

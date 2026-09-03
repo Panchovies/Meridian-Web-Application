@@ -199,9 +199,9 @@ deploy:
 smoke:
   stage: smoke
   needs: ['deploy']
+
   rules:
     # Only automatically runs after merging with main
-    # Can manually run if on a protected branch
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       changes:
         - k8s/app/**/*
@@ -209,8 +209,11 @@ smoke:
         - requirements.txt
         - Dockerfile
         - .dockerignore
+
+    # Can manually run if on a protected branch
     - if: $CI_COMMIT_REF_PROTECTED == "true"
       when: manual
+
   before_script:
     # Install system dependencies
     - apt-get update
@@ -223,25 +226,18 @@ smoke:
     - unzip -q awscliv2.zip
     - ./aws/install
 
-    # Install kubectl
-    - curl -LO "https://dl.k8s.io/release/$(curl -L -s
-      https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-    - install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
-
-    # Configure access to EKS
-    - aws eks update-kubeconfig --region "$AWS_DEFAULT_REGION" --name
-      "$EKS_CLUSTER_NAME"
-
   script:
     - |
       echo "Waiting for Load Balancer..."
 
       for i in $(seq 1 30); do
-        LB_HOST=$(kubectl get ingress meridian-web-application-ingress \
-          -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+        ALB_DNS_NAME=$(aws elbv2 describe-load-balancers \
+          --names meridian \
+          --query 'LoadBalancers[0].DNSName' \
+          --output text 2>/dev/null || true)
 
-        if [ -n "$LB_HOST" ]; then
-          echo "Load Balancer: $LB_HOST"
+        if [ -n "$ALB_DNS_NAME" ] && [ "$ALB_DNS_NAME" != "None" ]; then
+          echo "Load Balancer: $ALB_DNS_NAME"
           break
         fi
 
@@ -249,18 +245,18 @@ smoke:
         sleep 10
       done
 
-      if [ -z "$LB_HOST" ]; then
-        echo "ERROR: Load Balancer did not receive an external hostname."
+      if [ -z "$ALB_DNS_NAME" ] || [ "$ALB_DNS_NAME" = "None" ]; then
+        echo "ERROR: Load Balancer was not found."
         exit 1
       fi
 
-      echo "Running smoke test against http://$LB_HOST/health..."
+      echo "Running smoke test against http://$ALB_DNS_NAME/news..."
 
       for i in $(seq 1 30); do
         STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
           --connect-timeout 5 \
           --max-time 10 \
-          "http://$LB_HOST/news" || true)
+          "http://$ALB_DNS_NAME/news" || true)
 
         echo "Attempt $i/30: HTTP $STATUS"
 
@@ -272,5 +268,5 @@ smoke:
         sleep 10
       done
 
-      echo "ERROR: Health check did not return HTTP 200."
+      echo "ERROR: /news did not return HTTP 200 after 30 attempts."
       exit 1

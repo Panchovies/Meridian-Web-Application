@@ -117,32 +117,3 @@ resource "aws_route_table_association" "private" {
   subnet_id      = aws_subnet.private[count.index].id
   route_table_id = aws_route_table.private.id
 }
-
-### Security Group for EKS Worker Nodes ###
-
-resource "aws_security_group" "worker_nodes" {
-  name_prefix = "${var.project_name}-worker-nodes-sg-"
-  vpc_id      = aws_vpc.main.id
-  description = "Security group for EKS worker nodes"
-
-  # Inbound: Allow all traffic from within the VPC (Inter-pod communication)
-  ingress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = [aws_vpc.main.cidr_block]
-  }
-
-  # Outbound: Allow all outbound traffic (Routed through NAT Gateway)
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name                                        = "${var.project_name}-worker-nodes-sg"
-    "kubernetes.io/cluster/${var.cluster_name}" = "owned"
-  }
-}
