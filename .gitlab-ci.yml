@@ -182,9 +182,13 @@ deploy:
   script:
     # Applies the manifests, however on the possibility that the application code was changed
     # but the manifests were not, it will force a rollout restart
-    - kubectl apply -f k8s/app/
-    - kubectl set image deployment/meridian-web-application
-      meridian-web-application=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY:$CI_COMMIT_SHORT_SHA
+    # The image is tagged with a SHA, the first apply will not work because it is bootstrapped
+    # with a non-existent image, but the second apply will work because the image is built and
+    # pushed in the previous stages
+    -kubectl create secret generic meridian-api-keys \
+    --from-literal=NEWS_API_KEY=$NEWS_API_KEY - kubectl apply -f k8s/app/ -
+    kubectl set image deployment/meridian-web-application
+    meridian-web-application=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY:$CI_COMMIT_SHORT_SHA
     - kubectl rollout status deployment/meridian-web-application --timeout=120s
 
 smoke:
