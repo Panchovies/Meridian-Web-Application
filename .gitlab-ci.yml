@@ -184,7 +184,7 @@ deploy:
     # but the manifests were not, it will force a rollout restart
     - kubectl apply -f k8s/app/
     - kubectl set image deployment/meridian-web-application
-      meridian-web-application=$ECR_REGISTRY/$ECR_REPOSITORY:$CI_COMMIT_SHORT_SHA
+      meridian-web-application=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY:$CI_COMMIT_SHORT_SHA
     - kubectl rollout status deployment/meridian-web-application --timeout=120s
 
 smoke:
