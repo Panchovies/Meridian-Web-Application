@@ -1,0 +1,86 @@
+### Replaces ingress and egress rules for ALB security group ###
+resource "aws_security_group" "alb" {
+  name   = "${var.application_service_name}-alb-sg"
+  vpc_id = aws_vpc.main.id
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "aws_lb" "meridian" {
+  name               = "${var.application_service_name}-alb"
+  load_balancer_type = "application"
+  subnets            = aws_subnet.public[*].id
+  security_groups    = [aws_security_group.alb.id]
+}
+
+resource "aws_lb_target_group" "meridian" {
+  name        = "${var.application_service_name}-tg"
+  port        = 5000
+  protocol    = "HTTP"
+  vpc_id      = aws_vpc.main.id
+  target_type = "ip"
+
+  health_check {
+    path = "/health"
+    port = "traffic-port"
+  }
+}
+
+resource "aws_lb_listener" "meridian_http" {
+  load_balancer_arn = aws_lb.meridian.arn
+  port              = 80
+  protocol          = "HTTP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.meridian.arn
+  }
+}
+
+### Replaces ingress ###
+
+resource "kubectl_manifest" "meridian_tgb" {
+  yaml_body = yamlencode({
+    apiVersion = "elbv2.k8s.aws/v1beta1"
+    kind       = "TargetGroupBinding"
+    metadata = {
+      name      = "${var.application_service_name}-tgb"
+      namespace = "default"
+    }
+    spec = {
+      serviceRef = {
+        name = var.application_service_name
+        port = 5000
+      }
+      targetGroupARN = aws_lb_target_group.meridian.arn
+      targetType     = "ip"
+    }
+  })
+
+  depends_on = [
+    helm_release.aws_load_balancer_controller,
+    aws_lb_target_group.meridian,
+  ]
+}
+
+### Allows traffic from ALB to EKS nodes on port 5000 ### 
+resource "aws_security_group_rule" "nodes_from_alb" {
+  type                     = "ingress"
+  from_port                = 5000
+  to_port                  = 5000
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.worker_nodes.id
+  source_security_group_id = aws_security_group.alb.id
+}

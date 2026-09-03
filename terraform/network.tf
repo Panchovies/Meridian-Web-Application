@@ -146,25 +146,3 @@ resource "aws_security_group" "worker_nodes" {
     "kubernetes.io/cluster/${var.cluster_name}" = "owned"
   }
 }
-
-### Launch Template — attaches our custom SG to the node group's instances ###
-
-resource "aws_launch_template" "worker_nodes" {
-  name_prefix = "${var.project_name}-worker-nodes-lt-"
-
-  network_interfaces {
-    associate_public_ip_address = false
-    security_groups             = [aws_security_group.worker_nodes.id]
-  }
-
-  tag_specifications {
-    resource_type = "instance"
-    tags = {
-      Name = "${var.project_name}-worker-node"
-    }
-  }
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
