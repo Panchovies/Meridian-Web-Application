@@ -76,11 +76,14 @@ build:
   # Only rebuild when a file that actually ends up in the image changed. See
   # README, Stage 2: Build. Taken From Anish's Repository.
   rules:
-    - changes:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
         - src/**/*
         - requirements.txt
         - Dockerfile
         - .dockerignore
+    - if: $CI_COMMIT_REF_PROTECTED == "true"
+      when: manual
   script:
     - docker build -t "$ECR_REPOSITORY:$CI_COMMIT_SHORT_SHA" .
     - docker save "$ECR_REPOSITORY:$CI_COMMIT_SHORT_SHA" -o image.tar
