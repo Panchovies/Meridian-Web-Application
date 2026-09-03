@@ -229,9 +229,10 @@ smoke:
     # Install Terraform 1.16.0
     - curl -fsSL
       https://releases.hashicorp.com/terraform/1.16.0/terraform_1.16.0_linux_amd64.zip
-      -o terraform.zip
-    - unzip -qo terraform.zip
-    - mv terraform /usr/local/bin/terraform
+      -o /tmp/terraform.zip
+    - mkdir -p /tmp/terraform-bin
+    - unzip -qo /tmp/terraform.zip -d /tmp/terraform-bin
+    - mv /tmp/terraform-bin/terraform /usr/local/bin/terraform
     - terraform version
 
   script:
