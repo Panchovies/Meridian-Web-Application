@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: meridian-web-application
-          image: 163558211438.dkr.ecr.us-east-1.amazonaws.com/meridian-web-application:latest
+          image: 163558211438.dkr.ecr.us-east-1.amazonaws.com/terraform-meridian-web-application:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 5000
