@@ -230,7 +230,7 @@ smoke:
     - curl -fsSL
       https://releases.hashicorp.com/terraform/1.16.0/terraform_1.16.0_linux_amd64.zip
       -o terraform.zip
-    - unzip -q terraform.zip
+    - unzip -qo terraform.zip
     - mv terraform /usr/local/bin/terraform
     - terraform version
 
