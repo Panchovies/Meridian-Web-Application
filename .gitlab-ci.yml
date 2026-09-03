@@ -150,6 +150,8 @@ deploy:
         - .dockerignore
     - if: $CI_COMMIT_REF_PROTECTED == "true"
       when: manual
+  variables:
+    ECR_REPOSITORY: terraform-meridian-web-application
   before_script:
     # Install system dependencies
     - apt-get update
