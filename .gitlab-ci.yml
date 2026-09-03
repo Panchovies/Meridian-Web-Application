@@ -123,12 +123,8 @@ push:
     - docker load -i image.tar
     - docker tag "$ECR_REPOSITORY:$CI_COMMIT_SHORT_SHA"
       "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY:$CI_COMMIT_SHORT_SHA"
-    - docker tag "$ECR_REPOSITORY:$CI_COMMIT_SHORT_SHA"
-      "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY:latest"
     - docker push
       "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY:$CI_COMMIT_SHORT_SHA"
-    - docker push
-      "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY:latest"
 
 # Deploys new application to cluster when application code changes are made
 # The cluster MUST be running AND the NewsAPI key MUST be in the secrets for this to work, has to be run manually
