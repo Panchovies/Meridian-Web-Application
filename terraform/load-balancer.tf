@@ -62,7 +62,7 @@ resource "kubectl_manifest" "meridian_tgb" {
     spec = {
       serviceRef = {
         name = var.application_service_name
-        port = 5000
+        port = 80
       }
       targetGroupARN = aws_lb_target_group.meridian.arn
       targetType     = "ip"

@@ -226,30 +226,26 @@ smoke:
     - unzip -q awscliv2.zip
     - ./aws/install
 
+    # Install Terraform 1.16.0
+    - curl -fsSL
+      https://releases.hashicorp.com/terraform/1.16.0/terraform_1.16.0_linux_amd64.zip
+      -o terraform.zip
+    - unzip -q terraform.zip
+    - mv terraform /usr/local/bin/terraform
+    - terraform version
+
   script:
     - |
-      echo "Waiting for Load Balancer..."
+      echo "Getting Load Balancer from Terraform output..."
 
-      for i in $(seq 1 30); do
-        ALB_DNS_NAME=$(aws elbv2 describe-load-balancers \
-          --names meridian \
-          --query 'LoadBalancers[0].DNSName' \
-          --output text 2>/dev/null || true)
+      ALB_DNS_NAME=$(terraform -chdir=terraform output -raw load_balancer_dns_name)
 
-        if [ -n "$ALB_DNS_NAME" ] && [ "$ALB_DNS_NAME" != "None" ]; then
-          echo "Load Balancer: $ALB_DNS_NAME"
-          break
-        fi
-
-        echo "Load Balancer not ready yet ($i/30)"
-        sleep 10
-      done
-
-      if [ -z "$ALB_DNS_NAME" ] || [ "$ALB_DNS_NAME" = "None" ]; then
-        echo "ERROR: Load Balancer was not found."
+      if [ -z "$ALB_DNS_NAME" ]; then
+        echo "ERROR: Terraform did not return an ALB DNS name."
         exit 1
       fi
 
+      echo "Load Balancer: $ALB_DNS_NAME"
       echo "Running smoke test against http://$ALB_DNS_NAME/news..."
 
       for i in $(seq 1 30); do
