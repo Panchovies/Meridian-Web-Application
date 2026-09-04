@@ -70,6 +70,7 @@ terraform:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
   script:
+    - cd terraform
     - echo "── terraform fmt ────────────────────────────────"
     - terraform fmt -check -recursive
     - echo "── terraform init ────────────────────────────────"
