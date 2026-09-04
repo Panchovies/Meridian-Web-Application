@@ -189,10 +189,12 @@ deploy:
       --from-literal=NEWS_API_KEY="$NEWS_API_KEY" --dry-run=client -o yaml |
       kubectl apply -f -
 
-    - kubectl apply -f k8s/app/
+    - 'sed -i.bak "s|image:
+      163558211438.dkr.ecr.us-east-1.amazonaws.com/terraform-meridian-web-application:latest|image:
+      $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY:$CI_COMMIT_SHORT_SHA|"
+      k8s/app/deployment.yaml'
 
-    - kubectl set image deployment/meridian-web-application
-      meridian-web-application=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY:$CI_COMMIT_SHORT_SHA
+    - kubectl apply -f k8s/app/
 
     - kubectl rollout status deployment/meridian-web-application --timeout=120s
 
