@@ -1,7 +1,11 @@
 ### Replaces ingress and egress rules for ALB security group ###
 resource "aws_security_group" "alb" {
-  name   = "${var.application_service_name}-alb-sg"
-  vpc_id = aws_vpc.main.id
+  name_prefix = "${var.application_service_name}-alb-sg-"
+  vpc_id      = aws_vpc.main.id
+
+  lifecycle {
+    create_before_destroy = true
+  }
 
   ingress {
     from_port   = 80
@@ -23,6 +27,9 @@ resource "aws_lb" "meridian" {
   load_balancer_type = "application"
   subnets            = aws_subnet.public[*].id
   security_groups    = [aws_security_group.alb.id]
+  depends_on = [
+    aws_internet_gateway.main,
+  ]
 }
 
 resource "aws_lb_target_group" "meridian" {
@@ -35,7 +42,12 @@ resource "aws_lb_target_group" "meridian" {
   health_check {
     path = "/health"
     port = "traffic-port"
+    interval            = 15
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
   }
+
+  deregistration_delay = 30
 }
 
 resource "aws_lb_listener" "meridian_http" {

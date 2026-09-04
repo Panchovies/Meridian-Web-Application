@@ -236,7 +236,7 @@ smoke:
         ALB_DNS_NAME=$(aws elbv2 describe-load-balancers \
           --names meridian-web-application-alb \
           --query 'LoadBalancers[0].DNSName' \
-          --output text 2>/dev/null || true)
+          --output text)
 
         if [ -n "$ALB_DNS_NAME" ] && [ "$ALB_DNS_NAME" != "None" ]; then
           echo "Load Balancer: $ALB_DNS_NAME"

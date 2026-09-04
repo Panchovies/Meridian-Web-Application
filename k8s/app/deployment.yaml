@@ -18,6 +18,7 @@ spec:
       labels:
         app: meridian-web-application
     spec:
+      terminationGracePeriodSeconds: 30
       containers:
         - name: meridian-web-application
           image: 163558211438.dkr.ecr.us-east-1.amazonaws.com/terraform-meridian-web-application:latest
