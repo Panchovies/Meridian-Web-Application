@@ -155,7 +155,7 @@ deploy:
   before_script:
     # Install system dependencies
     - apt-get update
-    - apt-get install -y curl unzip
+    - apt-get install -y curl unzip gettext-base
     - rm -rf /var/lib/apt/lists/*
 
     # Install AWS CLI
@@ -169,9 +169,6 @@ deploy:
     - curl -LO
       "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl"
     - install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
-
-    # Install envsubst
-    - apt-get install -y curl unzip gettext-base
 
     - aws eks update-kubeconfig --region "$AWS_DEFAULT_REGION" --name
       "$EKS_CLUSTER_NAME"
