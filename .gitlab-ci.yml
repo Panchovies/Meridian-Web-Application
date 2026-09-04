@@ -4,6 +4,7 @@ default:
 
 stages:
   - checks
+  - terraform
   - build
   - push
   - deploy
@@ -63,6 +64,20 @@ checks:
         commitlint --from "$(git rev-list --max-parents=0 HEAD | tail -1)" --to HEAD --verbose \
           || echo "WARNING: history has non-conforming commits. Not failing the pipeline yet."
       fi
+
+terraform:
+  stage: terraform
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  script:
+    - echo "── terraform fmt ────────────────────────────────"
+    - terraform fmt -check -recursive
+    - echo "── terraform init ────────────────────────────────"
+    - terraform init
+    - echo "── terraform validate ────────────────────────────────"
+    - terraform validate
+    - echo "── terraform plan ────────────────────────────────"
+    - terraform plan
 
 build:
   # Builds the Docker image. Then composes the
