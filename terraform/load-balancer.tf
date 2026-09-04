@@ -40,8 +40,8 @@ resource "aws_lb_target_group" "meridian" {
   target_type = "ip"
 
   health_check {
-    path = "/health"
-    port = "traffic-port"
+    path                = "/health"
+    port                = "traffic-port"
     interval            = 15
     healthy_threshold   = 2
     unhealthy_threshold = 2
