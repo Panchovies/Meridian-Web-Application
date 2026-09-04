@@ -1,4 +1,6 @@
 terraform {
+  required_version = "~> 1.2"
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -21,5 +23,11 @@ terraform {
     }
   }
 
-  required_version = "~> 1.2"
+  backend "s3" {
+    bucket       = "meridian-terraform-state-163558211438"
+    key          = "meridian/terraform.tfstate"
+    region       = "us-east-1"
+    use_lockfile = true
+    encrypt      = true
+  }
 }
