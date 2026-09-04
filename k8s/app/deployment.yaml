@@ -5,6 +5,7 @@ metadata:
   labels:
     app: meridian-web-application
 spec:
+  revisionHistoryLimit: 20
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -18,18 +19,28 @@ spec:
       labels:
         app: meridian-web-application
     spec:
-      terminationGracePeriodSeconds: 30
+      terminationGracePeriodSeconds: 60
       containers:
         - name: meridian-web-application
-          image: 163558211438.dkr.ecr.us-east-1.amazonaws.com/terraform-meridian-web-application:latest
+          image: ${MERIDIAN_IMAGE}
           imagePullPolicy: Always
           ports:
             - containerPort: 5000
+
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - /bin/sh
+                  - -c
+                  - sleep 10
+
           envFrom:
             - configMapRef:
                 name: meridian-web-application-config
             - secretRef:
                 name: meridian-api-keys
+
           # Liveness and readiness probes for /health endpoint
           startupProbe:
             httpGet:

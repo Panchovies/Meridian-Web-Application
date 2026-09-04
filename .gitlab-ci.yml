@@ -67,9 +67,9 @@ checks:
 build:
   # Builds the Docker image. Then composes the
   stage: build
-  image: docker:latest
+  image: docker:29.7.2
   services:
-    - docker:dind
+    - docker:29.7.2-dind
   variables:
     ECR_REPOSITORY: terraform-meridian-web-application
     DOCKER_TLS_CERTDIR: '/certs'
@@ -95,9 +95,9 @@ build:
 push:
   stage: push
   needs: ['build']
-  image: docker:latest
+  image: docker:29.7.2
   services:
-    - docker:dind
+    - docker:29.7.2-dind
   rules:
     # Only automatically runs after merging with main
     # Can manually run if on a protected branch
@@ -165,8 +165,9 @@ deploy:
     - ./aws/install
 
     # Install kubectl
-    - curl -LO "https://dl.k8s.io/release/$(curl -L -s
-      https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+    - KUBECTL_VERSION="v1.34.0"
+    - curl -LO
+      "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl"
     - install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 
     - aws eks update-kubeconfig --region "$AWS_DEFAULT_REGION" --name
@@ -189,12 +190,11 @@ deploy:
       --from-literal=NEWS_API_KEY="$NEWS_API_KEY" --dry-run=client -o yaml |
       kubectl apply -f -
 
-    - 'sed -i.bak "s|image:
-      163558211438.dkr.ecr.us-east-1.amazonaws.com/terraform-meridian-web-application:latest|image:
-      $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY:$CI_COMMIT_SHORT_SHA|"
-      k8s/app/deployment.yaml'
-
-    - kubectl apply -f k8s/app/
+    - export
+      MERIDIAN_IMAGE="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY:$CI_COMMIT_SHORT_SHA"
+    - kubectl apply -f k8s/app/configmap.yaml -f k8s/app/service.yaml -f
+      k8s/app/hpa.yaml
+    - envsubst < k8s/app/deployment.yaml | kubectl apply -f -
 
     - kubectl rollout status deployment/meridian-web-application --timeout=120s
 
@@ -234,8 +234,7 @@ smoke:
 
       for i in $(seq 1 30); do
         ALB_DNS_NAME=$(aws elbv2 describe-load-balancers \
-          --names meridian-web-application-alb \
-          --query 'LoadBalancers[0].DNSName' \
+          --query "LoadBalancers[?LoadBalancerName=='meridian-web-application-alb'].DNSName | [0]" \
           --output text)
 
         if [ -n "$ALB_DNS_NAME" ] && [ "$ALB_DNS_NAME" != "None" ]; then
