@@ -19,7 +19,7 @@ resource "aws_ecr_lifecycle_policy" "ecr" {
     rules = [
       {
         rulePriority = 1
-        # Matches k8s/deployment.yaml's revisionHistoryLimit: 20, so every
+        # Matches k8s/app/deployment.yaml's revisionHistoryLimit: 20, so every
         # ReplicaSet k8s could still roll back to has a matching image in ECR.
         description = "Expire any images that are not the most recent 20"
         selection = {

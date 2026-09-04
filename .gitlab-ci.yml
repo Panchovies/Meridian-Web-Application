@@ -181,11 +181,7 @@ deploy:
       fi
 
   script:
-    # Applies the manifests, however on the possibility that the application code was changed
-    # but the manifests were not, it will force a rollout restart
-    # The image is tagged with a SHA, the first apply will not work because it is bootstrapped
-    # with a non-existent image, but the second apply will work because the image is built and
-    # pushed in the previous stages
+    # Applies the manifests after setting the image variable
     - kubectl create secret generic meridian-api-keys
       --from-literal=NEWS_API_KEY="$NEWS_API_KEY" --dry-run=client -o yaml |
       kubectl apply -f -
