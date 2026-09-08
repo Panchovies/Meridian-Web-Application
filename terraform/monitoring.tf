@@ -22,25 +22,6 @@ resource "aws_eks_addon" "cloudwatch_observability" {
 
 ### CreatesCloudwatch Alarms for EKS Cluster ###
 
-data "aws_lb" "meridian" {
-  tags = {
-    "ingress.k8s.aws/stack" = "default/${var.application_service_name}-ingress"
-  }
-
-  depends_on = [
-    kubernetes_ingress_v1.meridian
-  ]
-}
-
-data "aws_lb_target_group" "meridian" {
-  tags = {
-    "ingress.k8s.aws/stack" = "default/${var.application_service_name}-ingress"
-  }
-
-  depends_on = [
-    kubernetes_ingress_v1.meridian
-  ]
-}
 
 ### High Pod CPU Utilization ###
 resource "aws_cloudwatch_metric_alarm" "high_pod_cpu" {
@@ -105,8 +86,8 @@ resource "aws_cloudwatch_metric_alarm" "target_5xx_error_rate" {
       period      = 300
       stat        = "Sum"
       dimensions = {
-        LoadBalancer = data.aws_lb.meridian.arn_suffix
-        TargetGroup  = data.aws_lb_target_group.meridian.arn_suffix
+        LoadBalancer = aws_lb.meridian.arn_suffix
+        TargetGroup  = aws_lb_target_group.meridian.arn_suffix
       }
     }
   }
@@ -119,7 +100,7 @@ resource "aws_cloudwatch_metric_alarm" "target_5xx_error_rate" {
       period      = 300
       stat        = "Sum"
       dimensions = {
-        LoadBalancer = data.aws_lb.meridian.arn_suffix
+        LoadBalancer = aws_lb.meridian.arn_suffix
       }
     }
   }
@@ -149,7 +130,7 @@ resource "aws_cloudwatch_metric_alarm" "elb_5xx_error_rate" {
       period      = 300
       stat        = "Sum"
       dimensions = {
-        LoadBalancer = data.aws_lb.meridian.arn_suffix
+        LoadBalancer = aws_lb.meridian.arn_suffix
       }
     }
   }
@@ -162,7 +143,7 @@ resource "aws_cloudwatch_metric_alarm" "elb_5xx_error_rate" {
       period      = 300
       stat        = "Sum"
       dimensions = {
-        LoadBalancer = data.aws_lb.meridian.arn_suffix
+        LoadBalancer = aws_lb.meridian.arn_suffix
       }
     }
   }

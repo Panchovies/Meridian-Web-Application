@@ -65,13 +65,13 @@ variable "node_instance_types" {
 }
 
 variable "node_desired_size" {
-  type    = number
+  type = number
 }
 
 variable "node_min_size" {
-  type    = number
+  type = number
 }
 
 variable "node_max_size" {
-  type    = number
+  type = number
 }
