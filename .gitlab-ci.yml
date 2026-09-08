@@ -70,11 +70,11 @@ terraform:
   rules:
     - if: '$CI_COMMIT_REF_PROTECTED == "true"'
   script:
-    - cd terraform -input=false
+    - cd terraform
     - echo "── terraform fmt ────────────────────────────────"
     - terraform fmt -check -recursive
     - echo "── terraform init ────────────────────────────────"
-    - terraform init
+    - terraform init -input=false
     - echo "── terraform validate ────────────────────────────────"
     - terraform validate
     - echo "── terraform plan ────────────────────────────────"
