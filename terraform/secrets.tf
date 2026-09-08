@@ -39,7 +39,7 @@ resource "helm_release" "external_secrets" {
       }
     })
   ]
-  atomic  = true # If this resource fails, it cleans up the helm release
+  atomic = true # If this resource fails, it cleans up the helm release
 
   depends_on = [
     aws_eks_addon.pod_identity_agent,
@@ -67,7 +67,7 @@ resource "kubectl_manifest" "aws_secrets_manager" {
       }
     }
   })
-  
+
   depends_on = [
     helm_release.external_secrets
   ]
