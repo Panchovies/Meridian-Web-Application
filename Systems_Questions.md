@@ -302,3 +302,9 @@ the deployed infrastructure to stop matching the reviewed Terraform
 configuration. At a regulated company like Meridian, this is especially
 dangerous because the audit record can say one thing while production is
 actually running something different.
+
+## Tuesday, September 8th
+
+### What Is Least Privilege?
+
+### Why Does Least Privilege Matter?
