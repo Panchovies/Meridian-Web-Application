@@ -138,5 +138,5 @@ resource "aws_iam_role" "external_secrets" {
 
 resource "aws_iam_role_policy_attachment" "external_secrets" {
   role       = aws_iam_role.external_secrets.name
-  policy_arn = "arn:aws:iam::163558211438:policy/MeridianExternalSecretPolicy"
+  policy_arn = "arn:aws:iam::${var.aws_account_id}:policy/MeridianExternalSecretPolicy"
 }

@@ -73,7 +73,7 @@ resource "kubectl_manifest" "aws_secrets_manager" {
   ]
 }
 
-### Synchronie the secret from AWS Secrets Manager to Kubernetes Secret ###
+### Synchronize the secret from AWS Secrets Manager to Kubernetes Secret ###
 resource "kubectl_manifest" "meridian_api_keys" {
   yaml_body = yamlencode({
     apiVersion = "external-secrets.io/v1"
