@@ -635,3 +635,27 @@ kubectl rollout undo deployment/meridian-web-application
 ```
 
 Then debug the bad manifest/image separately before re-deploying.
+
+## `Terraform`
+
+### Bootstrapping the backend itself
+
+The S3 bucket that holds the Terraform state can't be created by the Terraform
+run that then uses it as a backend - that run has nowhere to put its own state
+until the bucket already exists. I created it by hand through the AWS CLI rather
+than in a second small Terraform project with its own local state:
+
+```bash
+aws s3api create-bucket \
+  --bucket meridian-terraform-state-163558211438 \
+  --region us-east-1
+
+aws s3api put-bucket-versioning \
+  --bucket meridian-terraform-state-163558211438 \
+  --versioning-configuration Status=Enabled
+
+aws s3api put-public-access-block \
+  --bucket meridian-terraform-state-163558211438 \
+  --public-access-block-configuration \
+  BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+```

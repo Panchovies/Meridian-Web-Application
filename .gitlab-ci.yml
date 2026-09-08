@@ -70,7 +70,7 @@ terraform:
   rules:
     - if: '$CI_COMMIT_REF_PROTECTED == "true"'
   script:
-    - cd terraform
+    - cd terraform -input=false
     - echo "── terraform fmt ────────────────────────────────"
     - terraform fmt -check -recursive
     - echo "── terraform init ────────────────────────────────"
@@ -78,7 +78,7 @@ terraform:
     - echo "── terraform validate ────────────────────────────────"
     - terraform validate
     - echo "── terraform plan ────────────────────────────────"
-    - terraform plan
+    - terraform plan -input=false -lock-timeout=5m
 
 build:
   # Builds the Docker image. Then composes the

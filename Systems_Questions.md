@@ -284,17 +284,21 @@ apply those changes.
 ### What Is Infrastructure Drift
 
 Infrastructure drift is when `terraform` and what it is creating/communicating
-with (in our case, AWS) disagree on the state of the creation. So if `terraform`
-creates a S3 bucket and that bucket gets manually changed in the AWS console,
-`terraform` is not updated on that change. `terraform` will continue to operate
-as if that bucket is the exact same as when it created it, which can lead to it
-using it incorrectly.
+with, in our case AWS, disagree on the state of the creation. `terraform plan`
+refreshes every resource already in its state against the provider before it
+computes a plan. So if `terraform` creates an S3 bucket and that bucket gets
+manually changed in the AWS console, `terraform` will detect that change during
+the next plan and propose putting it back to match the configuration.
 
 ### Why Is Drift Dangerous
 
 Drift is dangerous at a company like Meridian because when so many people are
-working on the same infrastructure, changes can happen constantly. If
-`terraform` is not updated on them, errors, poor destruction, or unnecessary
-recreations can happen, creating orphaned resources or hanging destroys. This
-not only shuts down the infrastructure but costs them money for those resources
-as well.
+working on the same infrastructure, changes can happen constantly. While
+`terraform` can detect changes to resources already in its state, resources
+created outside of `terraform` are invisible to it. They are not in the state,
+so no plan mentions them and no destroy removes them. This can lead to orphaned
+resources that continue costing money without being tracked. It can also cause
+the deployed infrastructure to stop matching the reviewed Terraform
+configuration. At a regulated company like Meridian, this is especially
+dangerous because the audit record can say one thing while production is
+actually running something different.
