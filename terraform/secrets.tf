@@ -22,8 +22,7 @@ resource "helm_release" "external_secrets" {
   ]
 
   depends_on = [
-    aws_eks_addon.pod_identity_agent,
-    aws_eks_pod_identity_association.external_secrets
+    aws_eks_addon.pod_identity_agent
   ]
 }
 

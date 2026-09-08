@@ -42,7 +42,7 @@ resource "aws_eks_pod_identity_association" "external_secrets" {
   role_arn = aws_iam_role.external_secrets.arn
 
   depends_on = [
-    aws_eks_addon.pod_identity_agent,
+    helm_release.external_secrets,
     aws_iam_role_policy_attachment.external_secrets
   ]
 }
