@@ -67,6 +67,8 @@ checks:
 
 terraform:
   stage: terraform
+  variables:
+    TF_IN_AUTOMATION: 'true'
   rules:
     - if: '$CI_COMMIT_REF_PROTECTED == "true"'
   script:
