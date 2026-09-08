@@ -270,3 +270,35 @@ attempting to recreate resources that have already been created.
 ## Wednesday, September 2nd
 
 ### `terraform plan` vs `terraform apply`
+
+`terraform plan` helps you understand what `terraform` plans to add, change, or
+destroy without actually doing any of those things. It not only tells you that
+but the order in which it plans to do those things, which can help you track if
+your dependencies are working the way they should. It can also show you any
+syntax errors before running anything, the same way a compiler would.
+`terraform apply` works in a similar way, but gives you the option to actually
+apply those changes.
+
+## Thursday, September 3rd
+
+### What Is Infrastructure Drift
+
+Infrastructure drift is when `terraform` and what it is creating/communicating
+with, in our case AWS, disagree on the state of the creation. `terraform plan`
+refreshes every resource already in its state against the provider before it
+computes a plan. So if `terraform` creates an S3 bucket and that bucket gets
+manually changed in the AWS console, `terraform` will detect that change during
+the next plan and propose putting it back to match the configuration.
+
+### Why Is Drift Dangerous
+
+Drift is dangerous at a company like Meridian because when so many people are
+working on the same infrastructure, changes can happen constantly. While
+`terraform` can detect changes to resources already in its state, resources
+created outside of `terraform` are invisible to it. They are not in the state,
+so no plan mentions them and no destroy removes them. This can lead to orphaned
+resources that continue costing money without being tracked. It can also cause
+the deployed infrastructure to stop matching the reviewed Terraform
+configuration. At a regulated company like Meridian, this is especially
+dangerous because the audit record can say one thing while production is
+actually running something different.
