@@ -32,3 +32,17 @@ resource "aws_eks_pod_identity_association" "cloudwatch_observability" {
     aws_iam_role_policy_attachment.cloudwatch_observability,
   ]
 }
+
+### Associates the External Secrets Add-On ###
+resource "aws_eks_pod_identity_association" "external_secrets" {
+  cluster_name    = aws_eks_cluster.main.name
+  namespace       = "external-secrets"
+  service_account = "external-secrets"
+
+  role_arn = aws_iam_role.external_secrets.arn
+
+  depends_on = [
+    aws_eks_addon.pod_identity_agent,
+    aws_iam_role_policy_attachment.external_secrets
+  ]
+}
