@@ -24,7 +24,7 @@ resource "aws_eks_cluster" "main" {
   }
 
   enabled_cluster_log_types = ["api", "audit", "authenticator",
-   "controllerManager", "scheduler"]
+  "controllerManager", "scheduler"]
 
   depends_on = [
     aws_iam_role_policy_attachment.eks_cluster_policy,
@@ -42,11 +42,6 @@ resource "aws_eks_node_group" "main" {
 
   instance_types = var.node_instance_types
 
-  launch_template {
-    id      = aws_launch_template.worker_nodes.id
-    version = aws_launch_template.worker_nodes.latest_version
-  }
-
   scaling_config {
     desired_size = var.node_desired_size
     min_size     = var.node_min_size
@@ -62,5 +57,7 @@ resource "aws_eks_node_group" "main" {
     aws_iam_role_policy_attachment.eks_cni_policy,
     aws_iam_role_policy_attachment.eks_ecr_readonly,
     aws_iam_role_policy_attachment.cloudwatch_agent,
+    aws_nat_gateway.main,
+    aws_route_table_association.private,
   ]
 }

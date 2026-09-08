@@ -14,6 +14,7 @@ resource "helm_release" "aws_load_balancer_controller" {
   repository = "https://aws.github.io/eks-charts"
   chart      = "aws-load-balancer-controller"
   namespace  = "kube-system"
+  version    = "3.5.0"
 
   set = [
     {
@@ -36,6 +37,7 @@ resource "helm_release" "aws_load_balancer_controller" {
 
   depends_on = [
     aws_eks_pod_identity_association.aws_load_balancer_controller,
+    kubernetes_service_account.aws_load_balancer_controller,
     aws_eks_node_group.main,
   ]
 }

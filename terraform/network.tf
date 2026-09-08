@@ -22,9 +22,9 @@ resource "aws_subnet" "public" {
   map_public_ip_on_launch = true
 
   tags = {
-    Name                                         = "${var.project_name}-public-${var.availability_zones[count.index]}"
-    "kubernetes.io/cluster/${var.cluster_name}"  = "shared"
-    "kubernetes.io/role/elb"                     = "1"
+    Name                                        = "${var.project_name}-public-${var.availability_zones[count.index]}"
+    "kubernetes.io/cluster/${var.cluster_name}" = "shared"
+    "kubernetes.io/role/elb"                    = "1"
   }
 }
 
@@ -37,9 +37,9 @@ resource "aws_subnet" "private" {
   availability_zone = var.availability_zones[count.index]
 
   tags = {
-    Name                                         = "${var.project_name}-private-${var.availability_zones[count.index]}"
-    "kubernetes.io/cluster/${var.cluster_name}"  = "shared"
-    "kubernetes.io/role/internal-elb"            = "1"
+    Name                                        = "${var.project_name}-private-${var.availability_zones[count.index]}"
+    "kubernetes.io/cluster/${var.cluster_name}" = "shared"
+    "kubernetes.io/role/internal-elb"           = "1"
   }
 }
 
@@ -116,55 +116,4 @@ resource "aws_route_table_association" "private" {
   count          = length(aws_subnet.private)
   subnet_id      = aws_subnet.private[count.index].id
   route_table_id = aws_route_table.private.id
-}
-
-### Security Group for EKS Worker Nodes ###
-
-resource "aws_security_group" "worker_nodes" {
-  name_prefix = "${var.project_name}-worker-nodes-sg-"
-  vpc_id      = aws_vpc.main.id
-  description = "Security group for EKS worker nodes"
-
-  # Inbound: Allow all traffic from within the VPC (Inter-pod communication)
-  ingress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = [aws_vpc.main.cidr_block]
-  }
-
-  # Outbound: Allow all outbound traffic (Routed through NAT Gateway)
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name                                        = "${var.project_name}-worker-nodes-sg"
-    "kubernetes.io/cluster/${var.cluster_name}" = "owned"
-  }
-}
-
-### Launch Template — attaches our custom SG to the node group's instances ###
-
-resource "aws_launch_template" "worker_nodes" {
-  name_prefix = "${var.project_name}-worker-nodes-lt-"
-
-  network_interfaces {
-    associate_public_ip_address = false
-    security_groups             = [aws_security_group.worker_nodes.id]
-  }
-
-  tag_specifications {
-    resource_type = "instance"
-    tags = {
-      Name = "${var.project_name}-worker-node"
-    }
-  }
-
-  lifecycle {
-    create_before_destroy = true
-  }
 }
