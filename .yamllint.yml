@@ -1,3 +1,4 @@
+---
 # Prettier formats YAML first, so the rules it decides are switched off here
 # rather than fought with. What is left is the part prettier has no opinion
 # about: structure, duplicate keys, and truthy values.

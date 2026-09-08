@@ -1,3 +1,4 @@
+---
 # Local enforcement of the same checks CI runs. Install once with:
 #
 #     pre-commit install --install-hooks
