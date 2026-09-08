@@ -4,6 +4,7 @@ default:
 
 stages:
   - checks
+  - terraform
   - build
   - push
   - deploy
@@ -63,6 +64,23 @@ checks:
         commitlint --from "$(git rev-list --max-parents=0 HEAD | tail -1)" --to HEAD --verbose \
           || echo "WARNING: history has non-conforming commits. Not failing the pipeline yet."
       fi
+
+terraform:
+  stage: terraform
+  variables:
+    TF_IN_AUTOMATION: 'true'
+  rules:
+    - if: '$CI_COMMIT_REF_PROTECTED == "true"'
+  script:
+    - cd terraform
+    - echo "── terraform fmt ────────────────────────────────"
+    - terraform fmt -check -recursive
+    - echo "── terraform init ────────────────────────────────"
+    - terraform init -input=false
+    - echo "── terraform validate ────────────────────────────────"
+    - terraform validate
+    - echo "── terraform plan ────────────────────────────────"
+    - terraform plan -input=false -lock-timeout=5m
 
 build:
   # Builds the Docker image. Then composes the
