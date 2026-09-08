@@ -3,11 +3,30 @@ data "aws_secretsmanager_secret" "meridian_api_keys" {
   name = "meridian-api-keys"
 }
 
+### Creates the namespace for the External Secrets Add-On ###
+resource "kubernetes_namespace" "external_secrets" {
+  metadata {
+    name = "external-secrets"
+  }
+}
+
+### Creates the ServiceAccount for the External Secrets Add-On ###
+resource "kubernetes_service_account" "external_secrets" {
+  metadata {
+    name      = "external-secrets"
+    namespace = kubernetes_namespace.external_secrets.metadata[0].name
+  }
+
+  depends_on = [
+    kubernetes_namespace.external_secrets
+  ]
+}
+
 ### Gets the helm release for the External Secrets Add-On ###
 resource "helm_release" "external_secrets" {
   name             = "external-secrets"
-  namespace        = "external-secrets"
-  create_namespace = true
+  namespace        = kubernetes_namespace.external_secrets.metadata[0].name
+  create_namespace = false
 
   repository = "https://charts.external-secrets.io"
   chart      = "external-secrets"
@@ -15,14 +34,16 @@ resource "helm_release" "external_secrets" {
   values = [
     yamlencode({
       serviceAccount = {
-        create = true
-        name   = "external-secrets"
+        create = false
+        name   = kubernetes_service_account.external_secrets.metadata[0].name
       }
     })
   ]
+  atomic  = true # If this resource fails, it cleans up the helm release
 
   depends_on = [
-    aws_eks_addon.pod_identity_agent
+    aws_eks_addon.pod_identity_agent,
+    aws_eks_pod_identity_association.external_secrets
   ]
 }
 
@@ -46,9 +67,9 @@ resource "kubectl_manifest" "aws_secrets_manager" {
       }
     }
   })
-
+  
   depends_on = [
-    aws_eks_pod_identity_association.external_secrets
+    helm_release.external_secrets
   ]
 }
 

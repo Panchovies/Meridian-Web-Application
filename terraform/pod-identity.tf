@@ -37,12 +37,12 @@ resource "aws_eks_pod_identity_association" "cloudwatch_observability" {
 resource "aws_eks_pod_identity_association" "external_secrets" {
   cluster_name    = aws_eks_cluster.main.name
   namespace       = "external-secrets"
-  service_account = "external-secrets"
+  service_account = kubernetes_service_account.external_secrets.metadata[0].name
 
   role_arn = aws_iam_role.external_secrets.arn
 
   depends_on = [
-    helm_release.external_secrets,
+    kubernetes_service_account.external_secrets,
     aws_iam_role_policy_attachment.external_secrets
   ]
 }
