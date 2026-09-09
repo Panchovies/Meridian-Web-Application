@@ -125,15 +125,20 @@ build:
 trivy:
   stage: trivy
   needs: ['build']
-  image:
-    name: aquasec/trivy:0.74.0
-    entrypoint: ['']
+
+  image: docker:29.7.2
+
   services:
     - docker:29.7.2-dind
+
   variables:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ''
     ECR_REPOSITORY: terraform-meridian-web-application
+
+  before_script:
+    - apk add --no-cache trivy
+
   script:
     - docker load -i image.tar
     - docker run --rm "$ECR_REPOSITORY:$CI_COMMIT_SHORT_SHA" apk info -vv | sort
