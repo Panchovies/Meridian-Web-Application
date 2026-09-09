@@ -2,6 +2,8 @@ FROM python:3.13-alpine
 
 WORKDIR /app
 
+RUN apk update && apk upgrade
+
 COPY pyproject.toml .
 COPY requirements.txt .
 COPY src ./src
