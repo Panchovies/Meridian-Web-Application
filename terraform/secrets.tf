@@ -45,6 +45,7 @@ resource "helm_release" "external_secrets" {
     aws_eks_addon.pod_identity_agent,
     aws_eks_pod_identity_association.external_secrets,
     aws_eks_node_group.main,
+    helm_release.aws_load_balancer_controller,
   ]
 }
 
