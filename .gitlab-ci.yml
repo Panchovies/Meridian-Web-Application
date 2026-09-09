@@ -103,14 +103,13 @@ build:
   # Only rebuild when a file that actually ends up in the image changed. See
   # README, Stage 2: Build. Taken From Anish's Repository.
   rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       changes:
         - src/**/*
         - requirements.txt
         - Dockerfile
         - .dockerignore
-    - if: $CI_COMMIT_REF_PROTECTED == "true"
-      when: manual
   script:
     - docker build -t "$ECR_REPOSITORY:$CI_COMMIT_SHORT_SHA" .
     - docker save "$ECR_REPOSITORY:$CI_COMMIT_SHORT_SHA" -o image.tar
@@ -137,7 +136,9 @@ push:
         - requirements.txt
         - Dockerfile
         - .dockerignore
-    - if: $CI_COMMIT_REF_PROTECTED == "true"
+    - if:
+        '$CI_PIPELINE_SOURCE == "merge_request_event" &&
+        $CI_MERGE_REQUEST_SOURCE_BRANCH_PROTECTED == "true"'
       when: manual
   variables:
     ECR_REPOSITORY: terraform-meridian-web-application
@@ -176,8 +177,9 @@ deploy:
         - requirements.txt
         - Dockerfile
         - .dockerignore
-    - if: $CI_COMMIT_REF_PROTECTED == "true"
-      when: manual
+    - if:
+        '$CI_PIPELINE_SOURCE == "merge_request_event" &&
+        $CI_MERGE_REQUEST_SOURCE_BRANCH_PROTECTED == "true"'
   variables:
     ECR_REPOSITORY: terraform-meridian-web-application
   before_script:
@@ -234,8 +236,9 @@ smoke:
         - .dockerignore
 
     # Can manually run if on a protected branch
-    - if: $CI_COMMIT_REF_PROTECTED == "true"
-      when: manual
+    - if:
+        '$CI_PIPELINE_SOURCE == "merge_request_event" &&
+        $CI_MERGE_REQUEST_SOURCE_BRANCH_PROTECTED == "true"'
 
   before_script:
     # Install system dependencies
