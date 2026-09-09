@@ -144,14 +144,7 @@ trivy:
         - Dockerfile
         - .dockerignore
   script:
-    - IMAGE_NAME="$ECR_REPOSITORY:$CI_COMMIT_SHORT_SHA"
-
-    - docker inspect "$IMAGE_NAME:$CI_COMMIT_SHORT_SHA"
-    - docker run --rm "$IMAGE_NAME:$CI_COMMIT_SHORT_SHA" python -m pip show
-      msgpack setuptools
-
     - trivy image --input image.tar --exit-code 1 --severity HIGH,CRITICAL
-      "$IMAGE_NAME"
 
 # Pushes the Docker image to ECR.
 # Pushes to the ECR built by Terraform
