@@ -128,22 +128,15 @@ trivy:
   image:
     name: aquasec/trivy:0.74.0
     entrypoint: ['']
+  services:
+    - docker:29.7.2-dind
   variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ''
     ECR_REPOSITORY: terraform-meridian-web-application
-    TRIVY_CACHE_DIR: '.trivycache/trivy'
-  cache:
-    key: trivy-db
-    paths:
-      - .trivycache/trivy
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      changes:
-        - src/**/*
-        - requirements.txt
-        - Dockerfile
-        - .dockerignore
   script:
+    - docker load -i image.tar
+    - docker run --rm "$ECR_REPOSITORY:$CI_COMMIT_SHORT_SHA" apk info -vv | sort
     - trivy image --input image.tar --exit-code 1 --severity HIGH,CRITICAL
 
 # Pushes the Docker image to ECR.
