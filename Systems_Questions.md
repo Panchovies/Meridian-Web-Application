@@ -302,3 +302,21 @@ the deployed infrastructure to stop matching the reviewed Terraform
 configuration. At a regulated company like Meridian, this is especially
 dangerous because the audit record can say one thing while production is
 actually running something different.
+
+## Tuesday, September 8th
+
+### What Is Least Privilege?
+
+**Principle of Least Privilege** states that if something must be given
+permissions to complete certain actions, those permissions must have the least
+amount of privilege possible. If something only needs to be able to read from a
+repository, there is no reason to give it the permission to write as well. It
+just opens up more opportunities for something to be tampered with. An example
+of this would be a company giving out employee ids that let those with them
+access different parts of the building. You wouldn't give a receptionist's id
+the capability of accessing the marketing teams office, so why give more
+permissions to a role that doesn't need it?
+
+Sensitive data lives everywhere in an application like the one we are making,
+and if a bad actor is able access extended general permissions, they could do
+much more damage than if they only had those least privilege permissions.
