@@ -1,10 +1,8 @@
-FROM python:3.13-slim
+FROM python:3.13-alpine
 
 WORKDIR /app
 
-RUN apt-get update \
-    && apt-get upgrade -y \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk update && apk upgrade
 
 COPY pyproject.toml .
 COPY requirements.txt .
