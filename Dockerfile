@@ -11,8 +11,6 @@ COPY src ./src
 RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install --no-cache-dir .
 
-RUN pip show msgpack setuptools
-
 RUN adduser -D -u 1000 appuser
 USER appuser
 
