@@ -11,7 +11,7 @@ COPY src ./src
 RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install --no-cache-dir .
 
-RUN useradd --create-home --uid 1000 appuser
+RUN adduser --create-home --uid 1000 appuser
 USER appuser
 
 EXPOSE 5000
