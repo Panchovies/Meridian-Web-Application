@@ -6,6 +6,7 @@ stages:
   - checks
   - terraform
   - build
+  - trivy
   - push
   - deploy
   - smoke
@@ -102,6 +103,7 @@ build:
     DOCKER_TLS_CERTDIR: '/certs'
   # Only rebuild when a file that actually ends up in the image changed. See
   # README, Stage 2: Build. Taken From Anish's Repository.
+  # Build always when in a merge request for scanning purposes
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
@@ -118,10 +120,39 @@ build:
       - image.tar
     expire_in: 1 hour
 
+# Scans the Docker image for vulnerabilities using Trivy.
+# Fails the job if any HIGH or CRITICAL vulnerabilities are found.
+trivy:
+  stage: trivy
+  needs: ['build']
+  image:
+    name: aquasec/trivy:0.74.0
+    entrypoint: ['']
+  variables:
+    ECR_REPOSITORY: terraform-meridian-web-application
+    TRIVY_CACHE_DIR: '.trivycache/trivy'
+  cache:
+    key: trivy-db
+    paths:
+      - .trivycache/trivy
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        - src/**/*
+        - requirements.txt
+        - Dockerfile
+        - .dockerignore
+  script:
+    - IMAGE_NAME="$ECR_REPOSITORY:$CI_COMMIT_SHORT_SHA"
+    - trivy image --input image.tar --exit-code 1 --severity HIGH,CRITICAL
+      "$IMAGE_NAME"
+
 # Pushes the Docker image to ECR.
+# Pushes to the ECR built by Terraform
 push:
   stage: push
-  needs: ['build']
+  needs: ['trivy']
   image: docker:29.7.2
   services:
     - docker:29.7.2-dind
