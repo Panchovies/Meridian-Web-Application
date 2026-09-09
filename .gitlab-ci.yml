@@ -65,25 +65,34 @@ checks:
           || echo "WARNING: history has non-conforming commits. Not failing the pipeline yet."
       fi
 
-terraform:
-  stage: terraform
-  variables:
-    TF_IN_AUTOMATION: 'true'
+# Only runs the terraform fmt and validate commands. Does not require backend or protected CI variables.
+terraform-fmt-validate:
+  stage: infrastructure
   rules:
-    - if: '$CI_COMMIT_REF_PROTECTED == "true"'
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   script:
     - cd terraform
-    - echo "── terraform fmt ────────────────────────────────"
     - terraform fmt -check -recursive
-    - echo "── terraform init ────────────────────────────────"
-    - terraform init -input=false
-    - echo "── terraform validate ────────────────────────────────"
+    - terraform init -input=false -backend=false
     - terraform validate
-    - echo "── terraform plan ────────────────────────────────"
+
+# Adds the terraform plan command. Requires backend and protected CI variables.
+terraform-plan:
+  stage: infrastructure
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if:
+        '$CI_PIPELINE_SOURCE == "merge_request_event" &&
+        $CI_MERGE_REQUEST_SOURCE_BRANCH_PROTECTED == "true"'
+  script:
+    - cd terraform
+    - terraform init -input=false
+    - terraform validate
     - terraform plan -input=false -lock-timeout=5m
 
+# Builds the Docker image. Then composes the image into an artifact
 build:
-  # Builds the Docker image. Then composes the
   stage: build
   image: docker:29.7.2
   services:
@@ -110,6 +119,7 @@ build:
       - image.tar
     expire_in: 1 hour
 
+# Pushes the Docker image to ECR.
 push:
   stage: push
   needs: ['build']
