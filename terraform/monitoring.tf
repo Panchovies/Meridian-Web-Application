@@ -6,7 +6,7 @@ resource "aws_eks_addon" "cloudwatch_observability" {
   # Pass the JSON configuration 
   configuration_values = jsonencode({
     containerInsights = {
-      enabled = true
+      enabled = false
     }
     otelContainerInsights = {
       enabled = true
