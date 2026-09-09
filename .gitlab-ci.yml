@@ -136,9 +136,6 @@ trivy:
     DOCKER_TLS_CERTDIR: ''
     ECR_REPOSITORY: terraform-meridian-web-application
 
-  before_script:
-    - apk add --no-cache trivy
-
   script:
     - docker load -i image.tar
     - docker run --rm "$ECR_REPOSITORY:$CI_COMMIT_SHORT_SHA" apk info -vv | sort
