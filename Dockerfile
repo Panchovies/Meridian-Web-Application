@@ -2,8 +2,6 @@ FROM python:3.13-alpine
 
 WORKDIR /app
 
-RUN apk update && apk upgrade
-
 COPY pyproject.toml .
 COPY requirements.txt .
 COPY src ./src
@@ -11,7 +9,7 @@ COPY src ./src
 RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install --no-cache-dir .
 
-RUN adduser --create-home --uid 1000 appuser
+RUN adduser -D -u 1000 appuser
 USER appuser
 
 EXPOSE 5000
