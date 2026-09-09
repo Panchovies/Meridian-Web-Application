@@ -135,7 +135,7 @@ trivy:
 # Pushes to the ECR built by Terraform
 push:
   stage: push
-  needs: ['trivy']
+  needs: ['build', 'trivy']
   image: docker:29.7.2
   services:
     - docker:29.7.2-dind
