@@ -82,7 +82,7 @@ resource "aws_iam_role" "aws_load_balancer_controller" {
 
 resource "aws_iam_role_policy_attachment" "aws_load_balancer_controller" {
   role       = aws_iam_role.aws_load_balancer_controller.name
-  policy_arn = "arn:aws:iam::${var.aws_account_id}:policy/AWSLoadBalancerControllerIAMPolicy"
+  policy_arn = aws_iam_policy.aws_load_balancer_controller.arn
 }
 
 ### IAM role for the Cloudwatch Observability Add-On ###
@@ -138,5 +138,5 @@ resource "aws_iam_role" "external_secrets" {
 
 resource "aws_iam_role_policy_attachment" "external_secrets" {
   role       = aws_iam_role.external_secrets.name
-  policy_arn = "arn:aws:iam::${var.aws_account_id}:policy/MeridianExternalSecretPolicy"
+  policy_arn = aws_iam_policy.external_secrets.arn
 }
