@@ -67,7 +67,7 @@ checks:
 
 # Only runs the terraform fmt and validate commands. Does not require backend or protected CI variables.
 terraform-fmt-validate:
-  stage: infrastructure
+  stage: terraform
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
@@ -79,7 +79,7 @@ terraform-fmt-validate:
 
 # Adds the terraform plan command. Requires backend and protected CI variables.
 terraform-plan:
-  stage: infrastructure
+  stage: terraform
   rules:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
     - if:
