@@ -181,6 +181,7 @@ deploy:
   needs:
     - job: push
       optional: true
+  image: ci-tools:latest
   rules:
     # Only deploy when application code, dockerfile, or manifest change on default branch.
     # Deploy automatically when in a merge request on a protected branch and push has been run.
@@ -203,6 +204,7 @@ deploy:
       "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl"
     - install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 
+    # AWS CLI does not need to be explicitly installed because the GitLab runner image already has it.
     - aws eks update-kubeconfig --region "$AWS_DEFAULT_REGION" --name
       "$EKS_CLUSTER_NAME"
 
@@ -227,7 +229,7 @@ deploy:
 smoke:
   stage: smoke
   needs: ['deploy']
-
+  image: ci-tools:latest
   rules:
     # Only smoke when application code, dockerfile, or manifest change on default branch.
     # Smoke automatically when in a merge request on a protected branch
@@ -239,6 +241,7 @@ smoke:
 
   before_script:
     # Install system dependencies
+    # AWS CLI does not need to be explicitly installed because the GitLab runner image already has it.
     - apt-get update
     - apt-get install -y curl
     - rm -rf /var/lib/apt/lists/*

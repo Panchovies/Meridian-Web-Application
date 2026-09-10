@@ -167,15 +167,16 @@ environment dependencies were separately checked by `pip-audit`.
 Some rules in the security groups were too permissive, as well as some parts
 missing.
 
-- Added a 443 ingress rule to the ALB, it was missing previously
+- Opted to not use a 443 ingress, as there is nothing listening on that port.
 - The egress was overly permissive so the `0.0.0.0/0` was scoped down to the
-  `5000` port, inside the VPC
-- Added a security group rule for the EKS cluster, allowing traffic to EKS nodes
-  from elsewhere inside the VPC
+  `5000` port, inside the VPC.
+- The security group for `nodes_from_alb` was enough already; adding a group for
+  `VPC` is unnecessary and widens when the purpose is to narrow.
 
 #### Encryption
 
-Enabled encryption on S3 buckets using AWS KMS.
+Move the buckets from an S3-managed key to customer-managed KMS key with
+rotation on. Allows for more control over the key and the encryption.
 
 #### Audit Logging
 
@@ -183,7 +184,7 @@ The cluster already had all 5 logging types enabled correctly.
 
 #### Public Access
 
-Public access for the S3 buckets was enabled, with all four flags set `true`.
+Public access for the S3 buckets was disabled, with all four flags set `true`.
 
 #### CloudWatch Logs Retention
 

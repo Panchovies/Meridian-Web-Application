@@ -17,7 +17,7 @@ resource "aws_kms_alias" "s3" {
 
 ### Trade Data Bucket ###
 resource "aws_s3_bucket" "trade_data" {
-  bucket = "${var.trade_data_bucket_name}-${var.aws_account_id}"
+  bucket = "${var.trade_data_bucket_name}-${data.aws_caller_identity.current.account_id}"
 }
 
 resource "aws_s3_bucket_versioning" "trade_data" {
@@ -53,7 +53,7 @@ resource "aws_s3_bucket_public_access_block" "trade_data" {
 
 ### Pipeline Artifacts Bucket ###
 resource "aws_s3_bucket" "pipeline_artifacts" {
-  bucket = "${var.pipeline_artifacts_bucket_name}-${var.aws_account_id}"
+  bucket = "${var.pipeline_artifacts_bucket_name}-${data.aws_caller_identity.current.account_id}"
 }
 
 ### Server-side encryption ###
