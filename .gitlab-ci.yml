@@ -35,6 +35,7 @@ checks:
   script:
     - pip install --quiet -e '.[dev]'
     - pip install --quiet -r requirements.txt
+    - pip install --quiet -r requirements-dev.txt
     - echo "── ruff ─────────────────────────────────────────"
     - ruff check .
     - echo "── prettier ─────────────────────────────────────"
