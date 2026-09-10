@@ -6,6 +6,7 @@ stages:
   - checks
   - terraform
   - build
+  - trivy
   - push
   - deploy
   - smoke
@@ -20,20 +21,28 @@ workflow:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
+.application_changes:
+  changes:
+    - k8s/app/**/*
+    - src/**/*
+    - requirements.txt
+    - Dockerfile
+    - .dockerignore
+
 checks:
   stage: checks
   cache:
     key:
       files:
-        - pyproject.toml
         - requirements.txt
+        - requirements-dev.txt
     paths:
       - .cache/pip
   variables:
     PIP_CACHE_DIR: '$CI_PROJECT_DIR/.cache/pip'
   script:
-    - pip install --quiet -e '.[dev]'
     - pip install --quiet -r requirements.txt
+    - pip install --quiet -r requirements-dev.txt
     - echo "── ruff ─────────────────────────────────────────"
     - ruff check .
     - echo "── prettier ─────────────────────────────────────"
@@ -50,6 +59,8 @@ checks:
     - pytest -q
     - echo "── gitleaks ─────────────────────────────────────"
     - gitleaks git --verbose --redact .
+    - echo "── pip-audit ─────────────────────────────────────"
+    - pip-audit --progress-spinner off
     - |
       if [ -n "$CI_MERGE_REQUEST_IID" ]; then
         echo "── commitlint (merge request commits) ───────────"
@@ -65,25 +76,34 @@ checks:
           || echo "WARNING: history has non-conforming commits. Not failing the pipeline yet."
       fi
 
-terraform:
+# Only runs the terraform fmt and validate commands. Does not require backend or protected CI variables.
+terraform-fmt-validate:
   stage: terraform
-  variables:
-    TF_IN_AUTOMATION: 'true'
   rules:
-    - if: '$CI_COMMIT_REF_PROTECTED == "true"'
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   script:
     - cd terraform
-    - echo "── terraform fmt ────────────────────────────────"
     - terraform fmt -check -recursive
-    - echo "── terraform init ────────────────────────────────"
-    - terraform init -input=false
-    - echo "── terraform validate ────────────────────────────────"
+    - terraform init -input=false -backend=false
     - terraform validate
-    - echo "── terraform plan ────────────────────────────────"
+
+# Adds the terraform plan command. Requires backend and protected CI variables.
+terraform-plan:
+  stage: terraform
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if:
+        '$CI_PIPELINE_SOURCE == "merge_request_event" &&
+        $CI_MERGE_REQUEST_SOURCE_BRANCH_PROTECTED == "true"'
+  script:
+    - cd terraform
+    - terraform init -input=false
+    - terraform validate
     - terraform plan -input=false -lock-timeout=5m
 
+# Builds the Docker image. Then composes the image into an artifact
 build:
-  # Builds the Docker image. Then composes the
   stage: build
   image: docker:29.7.2
   services:
@@ -91,17 +111,12 @@ build:
   variables:
     ECR_REPOSITORY: terraform-meridian-web-application
     DOCKER_TLS_CERTDIR: '/certs'
-  # Only rebuild when a file that actually ends up in the image changed. See
-  # README, Stage 2: Build. Taken From Anish's Repository.
+  # Only rebuild when application code, dockerfile, or manifest change on default branch.
+  # Build always when in a merge request for scanning purposes.
   rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      changes:
-        - src/**/*
-        - requirements.txt
-        - Dockerfile
-        - .dockerignore
-    - if: $CI_COMMIT_REF_PROTECTED == "true"
-      when: manual
+      changes: !reference [.application_changes, changes]
   script:
     - docker build -t "$ECR_REPOSITORY:$CI_COMMIT_SHORT_SHA" .
     - docker save "$ECR_REPOSITORY:$CI_COMMIT_SHORT_SHA" -o image.tar
@@ -110,24 +125,39 @@ build:
       - image.tar
     expire_in: 1 hour
 
+# Scans the Docker image for vulnerabilities using Trivy.
+# Fails the job if any HIGH or CRITICAL vulnerabilities are found.
+trivy:
+  stage: trivy
+  needs: ['build']
+  image:
+    name: aquasec/trivy:0.74.0
+    entrypoint: ['']
+  rules:
+    # Only scan when application code, dockerfile, or manifest change on default branch.
+    # Scan always when in a merge request.
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes: !reference [.application_changes, changes]
+  script:
+    - trivy image --input image.tar --exit-code 1 --severity HIGH,CRITICAL
+
+# Pushes the Docker image to ECR.
+# Pushes to the ECR built by Terraform
 push:
   stage: push
-  needs: ['build']
+  needs: ['build', 'trivy']
   image: docker:29.7.2
   services:
     - docker:29.7.2-dind
   rules:
-    # Only automatically runs after merging with main
-    # Can manually run if on a protected branch
-    # Only rebuild when a file that actually ends up in the image changed. See
-    # README, Stage 3: Push. Taken From Anish's Repository.
+    # Only push when application code, dockerfile, or manifest change on default branch.
+    # Push manually when in a merge request on a protected branch.
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      changes:
-        - src/**/*
-        - requirements.txt
-        - Dockerfile
-        - .dockerignore
-    - if: $CI_COMMIT_REF_PROTECTED == "true"
+      changes: !reference [.application_changes, changes]
+    - if:
+        '$CI_PIPELINE_SOURCE == "merge_request_event" &&
+        $CI_MERGE_REQUEST_SOURCE_BRANCH_PROTECTED == "true"'
       when: manual
   variables:
     ECR_REPOSITORY: terraform-meridian-web-application
@@ -145,29 +175,20 @@ push:
       "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY:$CI_COMMIT_SHORT_SHA"
 
 # Deploys new application to cluster when application code changes are made
-# The cluster MUST be running AND the NewsAPI key MUST be in the secrets for this to work, has to be run manually
-# Remember to delete LoadBalancer and then cluster after this stage has been run
+# The cluster MUST be running AND the NewsAPI key MUST be in the secrets for this to work
 deploy:
   stage: deploy
   needs:
-    # If push needs to send an image, deploy will wait for push
-    # If push does not need to send an image but deploy does need to deploy
-    # (like if there is a manifest change but no application change) then
-    # deploy will still deploy without waiting for a stage that never happens
     - job: push
       optional: true
   rules:
-    # Only automatically runs after merging with main
-    # Can manually run if on a protected branch
+    # Only deploy when application code, dockerfile, or manifest change on default branch.
+    # Deploy automatically when in a merge request on a protected branch and push has been run.
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      changes:
-        - k8s/app/**/*
-        - src/**/*
-        - requirements.txt
-        - Dockerfile
-        - .dockerignore
-    - if: $CI_COMMIT_REF_PROTECTED == "true"
-      when: manual
+      changes: !reference [.application_changes, changes]
+    - if:
+        '$CI_PIPELINE_SOURCE == "merge_request_event" &&
+        $CI_MERGE_REQUEST_SOURCE_BRANCH_PROTECTED == "true"'
   variables:
     ECR_REPOSITORY: terraform-meridian-web-application
   before_script:
@@ -214,18 +235,13 @@ smoke:
   needs: ['deploy']
 
   rules:
-    # Only automatically runs after merging with main
+    # Only smoke when application code, dockerfile, or manifest change on default branch.
+    # Smoke automatically when in a merge request on a protected branch
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      changes:
-        - k8s/app/**/*
-        - src/**/*
-        - requirements.txt
-        - Dockerfile
-        - .dockerignore
-
-    # Can manually run if on a protected branch
-    - if: $CI_COMMIT_REF_PROTECTED == "true"
-      when: manual
+      changes: !reference [.application_changes, changes]
+    - if:
+        '$CI_PIPELINE_SOURCE == "merge_request_event" &&
+        $CI_MERGE_REQUEST_SOURCE_BRANCH_PROTECTED == "true"'
 
   before_script:
     # Install system dependencies
