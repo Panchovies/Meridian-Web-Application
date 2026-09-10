@@ -16,11 +16,11 @@ resource "aws_security_group" "alb" {
   }
 
   egress {
-    from_port   = 5000
-    to_port     = 5000
-    protocol    = "tcp"
+    from_port       = 5000
+    to_port         = 5000
+    protocol        = "tcp"
     security_groups = [aws_eks_cluster.main.vpc_config[0].cluster_security_group_id]
-    description = "To Meridian app targets in the VPC only"
+    description     = "To Meridian app targets in the VPC only"
   }
 }
 
