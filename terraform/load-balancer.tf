@@ -12,13 +12,23 @@ resource "aws_security_group" "alb" {
     to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
+    description = "HTTP from the internet"
+  }
+
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "HTTPS from the internet"
   }
 
   egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+    from_port   = 5000
+    to_port     = 5000
+    protocol    = "tcp"
+    cidr_blocks = [var.vpc_cidr]
+    description = "To Meridian app targets in the VPC only"
   }
 }
 
@@ -95,4 +105,16 @@ resource "aws_security_group_rule" "nodes_from_alb" {
   protocol                 = "tcp"
   security_group_id        = aws_eks_cluster.main.vpc_config[0].cluster_security_group_id
   source_security_group_id = aws_security_group.alb.id
+  description              = "Allow ALB to reach Meridian app port on nodes"
+}
+
+### Allows traffic from VPC to EKS nodes on port 5000 ###
+resource "aws_security_group_rule" "nodes_from_vpc" {
+  type              = "ingress"
+  from_port         = 5000
+  to_port           = 5000
+  protocol          = "tcp"
+  security_group_id = aws_eks_cluster.main.vpc_config[0].cluster_security_group_id
+  cidr_blocks       = [var.vpc_cidr]
+  description       = "Allow in-VPC clients (e.g. other pods, bastion, internal tooling) to reach Meridian app port on nodes"
 }
