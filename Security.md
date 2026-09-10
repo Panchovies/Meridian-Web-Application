@@ -41,4 +41,4 @@ the versions of `pip` and `setuptools` I was using. This is not because they
 were installed into the image, but because `pip-audit` ran in the `checks` stage
 of the pipeline, which explicitly adds the developer requirements for that
 stage. The fix was simple: explicitly add the correct versions of `pip` and
-`setuptools` to `requirements-dev.txt` (`pip`:26.1.2 and `setuptools`:83.0.0).
+`setuptools` to `requirements-dev.txt` (`pip`:26.2 and `setuptools`:83.0.0).
