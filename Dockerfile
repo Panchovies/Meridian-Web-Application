@@ -2,7 +2,7 @@ FROM python:3.13-alpine
 
 WORKDIR /app
 
-RUN apk update && apk upgrade --no-cache
+RUN apk upgrade --no-cache
 
 COPY pyproject.toml .
 COPY requirements.txt .

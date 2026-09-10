@@ -10,8 +10,7 @@ built image. The first 52 were about the base image itself, which at the time
 was `python:3.13-slim`. `slim` came equipped with many vulnerabilities that had
 no fixed versions outlined by `Trivy`. This led me to changing the image from
 `slim` to `alpine`, which only then gave 7 issues with the base image, all of
-which were fixed simply running `RUN apk update && apk upgrade --no-cache` in
-the Dockerfile.
+which were fixed simply running `RUN apk upgrade --no-cache` in the Dockerfile.
 
 Two more issues came up that did not have anything to do with the base image,
 but with two python packages: `msgpack` and `setuptools`. `setuptools` was in
