@@ -41,7 +41,6 @@ checks:
   variables:
     PIP_CACHE_DIR: '$CI_PROJECT_DIR/.cache/pip'
   script:
-    - pip install --quiet -e '.[dev]'
     - pip install --quiet -r requirements.txt
     - pip install --quiet -r requirements-dev.txt
     - echo "── ruff ─────────────────────────────────────────"
