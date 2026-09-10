@@ -34,8 +34,8 @@ checks:
   cache:
     key:
       files:
-        - pyproject.toml
         - requirements.txt
+        - requirements-dev.txt
     paths:
       - .cache/pip
   variables:
