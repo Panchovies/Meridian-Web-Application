@@ -5,11 +5,7 @@
 ### Wednesday, September 9th
 
 This was when `Trivy` was first implemented into the pipeline. Before that,
-there were no vulnerability checks. `Trivy` found 54 total findings in the built
-image. The first 52 were related to the base image itself, which at the time was
-`python:3.13-slim`. `slim` came equipped with many vulnerabilities that had no
-fixed versions outlined by `Trivy`. This led me to changing the image from
-`slim` to `alpine`.
+there were no vulnerability checks.
 
 The initial `python:3.13-slim` scan reported 54 findings: 51 HIGH and 3
 CRITICAL. The findings were split between 52 Debian package findings and two
@@ -71,6 +67,7 @@ was a second copy carried inside `pip`'s packages. Likewise, the vulnerable
 This explained why changing the `pip` version changed the findings. I initially
 diagnosed the problem as being caused by `pip` 26.2.1 carrying those outdated
 packages and switched from `26.2.1` to `26.1.1`, which removed the findings.
+
 However, the better solution was to avoid putting the installer into the runtime
 image at all.
 
@@ -109,6 +106,10 @@ The first `pip-audit` run reported the following:
 | `PYSEC-2026-3721` | —        | `pip` 24.0          | Yes, 26.2     | Pinned `pip` 26.2.1 in `requirements-dev.txt`        |
 | `PYSEC-2026-3447` | —        | `setuptools` 79.0.1 | Yes, 83.0.0   | Pinned `setuptools` 83.0.0 in `requirements-dev.txt` |
 
+`pip-audit` does not report severity for these `PYSEC` advisories, so the
+severity field is shown as `—` rather than assigning a severity that the tool
+does not provide.
+
 These findings were not caused by packages installed into the runtime image.
 `pip-audit` was run without an `-r` argument, so it audited the packages present
 in the `checks` job's Python environment. That environment includes the
@@ -125,6 +126,7 @@ reported vulnerabilities:
 
 ```text
 pip==26.2.1
+
 setuptools==83.0.0
 ```
 
@@ -140,13 +142,15 @@ tooling.
 
 ## Final Result
 
-The vulnerability work addressed the findings at two separate layers:
+The vulnerability work addressed the findings at three separate layers:
 
 1. **Base image vulnerabilities** were reduced by replacing `python:3.13-slim`
    with Alpine and upgrading its packages with `apk upgrade --no-cache`.
+
 2. **Runtime Python vulnerabilities** were removed by keeping development
    dependencies separate and removing `pip` and its packages from the runtime
    image.
+
 3. **Development environment vulnerabilities** found by `pip-audit` were
    addressed by explicitly pinning `pip==26.2.1` and `setuptools==83.0.0` in
    `requirements-dev.txt`.
