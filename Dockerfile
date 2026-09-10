@@ -1,6 +1,8 @@
-FROM python:3.13-slim
+FROM python:3.13-alpine
 
 WORKDIR /app
+
+RUN apk upgrade --no-cache
 
 COPY pyproject.toml .
 COPY requirements.txt .
@@ -8,8 +10,13 @@ COPY src ./src
 
 RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install --no-cache-dir .
+RUN rm -rf \
+        /usr/local/lib/python3.13/site-packages/pip \
+        /usr/local/lib/python3.13/site-packages/pip-*.dist-info \
+        /usr/local/bin/pip \
+        /usr/local/bin/pip3*
 
-RUN useradd --create-home --uid 1000 appuser
+RUN adduser -D -u 1000 appuser
 USER appuser
 
 EXPOSE 5000
