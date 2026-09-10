@@ -194,14 +194,8 @@ deploy:
   before_script:
     # Install system dependencies
     - apt-get update
-    - apt-get install -y curl unzip gettext-base
+    - apt-get install -y curl gettext-base
     - rm -rf /var/lib/apt/lists/*
-
-    # Install AWS CLI
-    - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o
-      "awscliv2.zip"
-    - unzip -q awscliv2.zip
-    - ./aws/install
 
     # Install kubectl
     - KUBECTL_VERSION="v1.34.0"
