@@ -67,7 +67,13 @@ Example response:
 
 - Python 3.14 (or any Python 3.x)
 - pip
+
+**Depending on how you plan to run it:**
+
 - Docker Desktop
+- minikube
+- Terraform
+
 
 ## Setup
 
@@ -82,6 +88,12 @@ Install dependencies:
 
 ```bash
 uv pip install -r requirements.txt
+```
+
+Install developer dependencies (only necessary for development):
+
+```bash
+uv pip install -r requirements-dev.txt
 ```
 
 ## Running locally
@@ -214,13 +226,21 @@ docker compose down
 Repository contains deployment.yaml, service.yaml, and configmap.yaml to use for
 deploying with minikube
 
+## Deploying With `Terraform`
+
+Repository contains a `terraform/` directory where `terraform apply` can be run to bring up the entire cluster along with any add-ons from nothing. `terraform destroy` can be run to destroy everything created by `terraform apply` to make sure nothing is being charged overnight when not in use.
+
 ## CI Pipeline
 
 The CI pipeline runs automatically whenever a **Merge Request (MR)** is opened.
-It validates the codebase through four stages to ensure code quality and
+It validates the codebase through 1-6 stages (depending on file changes and protected branches) to ensure code quality and
 deployment readiness.
 
-### Lint
+For clarification: **Always** means that the stage runs during a merge request event and on the default branch no matter what.
+
+### Checks
+
+**When:** Always
 
 Performs code quality and static analysis checks, including:
 
@@ -228,18 +248,55 @@ Performs code quality and static analysis checks, including:
 - Secret detection
 - mypy type checking
 - ruff linting
+- prettier spell checking
+- markdown linting
+- yaml linting
+- vale linting
 
-### Test
+### `Terraform`
 
-Runs the project's **pytest** suite to verify that existing and newly added
-tests pass successfully.
+This stage is split into two parts: one that does not need AWS credentials and one that does.
 
-### Build (Only when application code is changed)
+#### `Terraform-fmt-validate`
+
+**When:** Always
+
+Makes sure `Terraform` files are validated and correctly formatted. Fails if they are not, however will not make the formatting changes in the pipeline.
+
+#### `Terraform-plan`
+
+**When:** On the default branch or automatically on merge request events on a protected branch.
+
+Makes sure `terraform plan` runs without failure. Needs AWS credentials therefore only runs when protected. Does not run `terraform apply`, so it will not create anything.
+
+### Build
+
+**When:** On the default branch and when dockerfile, application code, or manifests are changed, or automatically on merge request events.
 
 Builds the Docker image to ensure the application can be packaged without
-errors. Artifacts that image to be used later by the push stage.
+errors. Artifacts that image to be used later by the push stage. Image is tagged with the SHA of the commit it is being ran on.
 
-### Push (Only on default [main] branch and when application code is changed)
+### `Trivy`
 
-Authenticates with **Amazon ECR** and verifies that the Docker image can be
-pushed successfully. Uses the artifact created in the build stage.
+**When:** On the default branch and when dockerfile, application code, or manifests are changed, or automatically on merge request events.
+
+Scans the Docker image for any vulnerabilities. Fails and reports any vulnerabilities that are of critical or high status. Uses the artifact created in the `build` stage.
+
+### Push
+
+**When:** On the default branch and when dockerfile, application code, or manifests are changed, or manually on merge request events on protected branches. That manual action will also allow the `deploy` and `smoke` stages to run automatically.
+
+Authenticates with an **Amazon ECR** created by `Terraform` and verifies that the Docker image can be
+pushed successfully. Uses the artifact created in the `build` stage.
+
+### Deploy
+
+**When:** On the default branch and when dockerfile, application code, or manifests are changed, or automatically on merge request events on protected branches. Only runs automatically if `push` was run manually.
+
+Deploy applies the deployment manifests, inserting the correct ECR image using the SHA of the current commit. Waits for deployment to succeed.
+
+### Smoke
+
+**When:** On the default branch and when dockerfile, application code, or manifests are changed, or automatically on merge request events on protected branches. Only runs automatically if `push` was run manually.
+
+Runs a smoke test targeting the `/news` endpoint, checking if it returns a `200` status code without relying on the external API.
