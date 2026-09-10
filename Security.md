@@ -162,8 +162,30 @@ environment dependencies were separately checked by `pip-audit`.
 
 ### Network Security
 
+#### Security Groups
+
+Some rules in the security groups were too permissive, as well as some parts
+missing.
+
 - Added a 443 ingress rule to the ALB, it was missing previously
 - The egress was overly permissive so the `0.0.0.0/0` was scoped down to the
   `5000` port, inside the VPC
 - Added a security group rule for the EKS cluster, allowing traffic to EKS nodes
   from elsewhere inside the VPC
+
+#### Encryption
+
+Enabled encryption on S3 buckets using AWS KMS.
+
+#### Audit Logging
+
+The cluster already had all 5 logging types enabled correctly.
+
+#### Public Access
+
+Public access for the S3 buckets was enabled, with all four flags set `true`.
+
+#### CloudWatch Logs Retention
+
+The retention period was set to 14 days, which is overkill for this environment.
+It was reduced to 7 days.
