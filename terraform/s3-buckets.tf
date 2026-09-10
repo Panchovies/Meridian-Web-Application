@@ -4,6 +4,7 @@ resource "aws_kms_key" "s3" {
   description             = "KMS key for Meridian S3 bucket encryption"
   enable_key_rotation     = true
   deletion_window_in_days = 30
+  policy                  = data.aws_iam_policy_document.s3_kms.json
 
   tags = {
     Name = "${var.project_name}-s3-kms"
@@ -18,6 +19,12 @@ resource "aws_kms_alias" "s3" {
 ### Trade Data Bucket ###
 resource "aws_s3_bucket" "trade_data" {
   bucket = "${var.trade_data_bucket_name}-${data.aws_caller_identity.current.account_id}"
+}
+
+### S3 bucket policy for trade data bucket ###
+resource "aws_s3_bucket_policy" "trade_data" {
+  bucket = aws_s3_bucket.trade_data.id
+  policy = data.aws_iam_policy_document.trade_data.json
 }
 
 resource "aws_s3_bucket_versioning" "trade_data" {
@@ -54,6 +61,12 @@ resource "aws_s3_bucket_public_access_block" "trade_data" {
 ### Pipeline Artifacts Bucket ###
 resource "aws_s3_bucket" "pipeline_artifacts" {
   bucket = "${var.pipeline_artifacts_bucket_name}-${data.aws_caller_identity.current.account_id}"
+}
+
+### S3 bucket policy for pipeline artifacts bucket ###
+resource "aws_s3_bucket_policy" "pipeline_artifacts" {
+  bucket = aws_s3_bucket.pipeline_artifacts.id
+  policy = data.aws_iam_policy_document.pipeline_artifacts.json
 }
 
 ### Server-side encryption ###
