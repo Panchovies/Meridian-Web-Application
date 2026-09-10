@@ -21,6 +21,14 @@ workflow:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
+.application_changes:
+  changes:
+    - k8s/app/**/*
+    - src/**/*
+    - requirements.txt
+    - Dockerfile
+    - .dockerignore
+
 checks:
   stage: checks
   cache:
@@ -104,17 +112,12 @@ build:
   variables:
     ECR_REPOSITORY: terraform-meridian-web-application
     DOCKER_TLS_CERTDIR: '/certs'
-  # Only rebuild when application code, dockefile, or manifest change on default branch.
+  # Only rebuild when application code, dockerfile, or manifest change on default branch.
   # Build always when in a merge request for scanning purposes.
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      changes:
-        - k8s/app/**/*
-        - src/**/*
-        - requirements.txt
-        - Dockerfile
-        - .dockerignore
+      changes: !reference [.application_changes, changes]
   script:
     - docker build -t "$ECR_REPOSITORY:$CI_COMMIT_SHORT_SHA" .
     - docker save "$ECR_REPOSITORY:$CI_COMMIT_SHORT_SHA" -o image.tar
@@ -132,16 +135,11 @@ trivy:
     name: aquasec/trivy:0.74.0
     entrypoint: ['']
   rules:
-    # Only scan when application code, dockefile, or manifest change on default branch.
+    # Only scan when application code, dockerfile, or manifest change on default branch.
     # Scan always when in a merge request.
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      changes:
-        - k8s/app/**/*
-        - src/**/*
-        - requirements.txt
-        - Dockerfile
-        - .dockerignore
+      changes: !reference [.application_changes, changes]
   script:
     - trivy image --input image.tar --exit-code 1 --severity HIGH,CRITICAL
 
@@ -154,15 +152,10 @@ push:
   services:
     - docker:29.7.2-dind
   rules:
-    # Only push when application code, dockefile, or manifest change on default branch.
+    # Only push when application code, dockerfile, or manifest change on default branch.
     # Push manually when in a merge request on a protected branch.
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      changes:
-        - k8s/app/**/*
-        - src/**/*
-        - requirements.txt
-        - Dockerfile
-        - .dockerignore
+      changes: !reference [.application_changes, changes]
     - if:
         '$CI_PIPELINE_SOURCE == "merge_request_event" &&
         $CI_MERGE_REQUEST_SOURCE_BRANCH_PROTECTED == "true"'
@@ -190,15 +183,10 @@ deploy:
     - job: push
       optional: true
   rules:
-    # Only deploy when application code, dockefile, or manifest change on default branch.
+    # Only deploy when application code, dockerfile, or manifest change on default branch.
     # Deploy automatically when in a merge request on a protected branch and push has been run.
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      changes:
-        - k8s/app/**/*
-        - src/**/*
-        - requirements.txt
-        - Dockerfile
-        - .dockerignore
+      changes: !reference [.application_changes, changes]
     - if:
         '$CI_PIPELINE_SOURCE == "merge_request_event" &&
         $CI_MERGE_REQUEST_SOURCE_BRANCH_PROTECTED == "true"'
@@ -248,15 +236,10 @@ smoke:
   needs: ['deploy']
 
   rules:
-    # Only smoke when application code, dockefile, or manifest change on default branch.
+    # Only smoke when application code, dockerfile, or manifest change on default branch.
     # Smoke automatically when in a merge request on a protected branch
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      changes:
-        - k8s/app/**/*
-        - src/**/*
-        - requirements.txt
-        - Dockerfile
-        - .dockerignore
+      changes: !reference [.application_changes, changes]
     - if:
         '$CI_PIPELINE_SOURCE == "merge_request_event" &&
         $CI_MERGE_REQUEST_SOURCE_BRANCH_PROTECTED == "true"'
