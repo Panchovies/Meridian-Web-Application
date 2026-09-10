@@ -1,8 +1,8 @@
 # Vulnerability Report
 
-## `Trivy`
+## Wednesday, September 9th
 
-### Wednesday, September 9th
+### `Trivy`
 
 This was when `Trivy` was first implemented into the pipeline. Before that,
 there were no vulnerability checks.
@@ -87,7 +87,7 @@ RUN rm -rf \
 This removed the vulnerable copies of `msgpack` and `setuptools` from the
 runtime image and resolved the remaining `Trivy` findings.
 
-## `pip-audit`
+### `pip-audit`
 
 `pip-audit` was also installed as part of the pipeline to audit Python
 dependencies. Its findings were separate from the `Trivy` image scan because the
@@ -140,7 +140,7 @@ case, the failure needs to be distinguished from an application dependency
 vulnerability and addressed by updating or pinning the affected development
 tooling.
 
-## Final Result
+### Final Result
 
 The vulnerability work addressed the findings at three separate layers:
 
@@ -157,3 +157,5 @@ The vulnerability work addressed the findings at three separate layers:
 
 The resulting image passed the `Trivy` vulnerability scan, while the development
 environment dependencies were separately checked by `pip-audit`.
+
+## Thursday, September 10th
