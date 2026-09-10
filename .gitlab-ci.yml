@@ -104,9 +104,8 @@ build:
   variables:
     ECR_REPOSITORY: terraform-meridian-web-application
     DOCKER_TLS_CERTDIR: '/certs'
-  # Only rebuild when a file that actually ends up in the image changed. See
-  # README, Stage 2: Build. Taken From Anish's Repository.
-  # Build always when in a merge request for scanning purposes
+  # Only rebuild when application code, dockefile, or manifest change on default branch.
+  # Build always when in a merge request for scanning purposes.
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
@@ -133,6 +132,8 @@ trivy:
     name: aquasec/trivy:0.74.0
     entrypoint: ['']
   rules:
+    # Only scan when application code, dockefile, or manifest change on default branch.
+    # Scan always when in a merge request.
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       changes:
@@ -153,10 +154,8 @@ push:
   services:
     - docker:29.7.2-dind
   rules:
-    # Only automatically runs after merging with main
-    # Can manually run if on a protected branch
-    # Only rebuild when a file that actually ends up in the image changed. See
-    # README, Stage 3: Push. Taken From Anish's Repository.
+    # Only push when application code, dockefile, or manifest change on default branch.
+    # Push manually when in a merge request on a protected branch.
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       changes:
         - k8s/app/**/*
@@ -184,20 +183,15 @@ push:
       "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPOSITORY:$CI_COMMIT_SHORT_SHA"
 
 # Deploys new application to cluster when application code changes are made
-# The cluster MUST be running AND the NewsAPI key MUST be in the secrets for this to work, has to be run manually
-# Remember to delete LoadBalancer and then cluster after this stage has been run
+# The cluster MUST be running AND the NewsAPI key MUST be in the secrets for this to work
 deploy:
   stage: deploy
   needs:
-    # If push needs to send an image, deploy will wait for push
-    # If push does not need to send an image but deploy does need to deploy
-    # (like if there is a manifest change but no application change) then
-    # deploy will still deploy without waiting for a stage that never happens
     - job: push
       optional: true
   rules:
-    # Only automatically runs after merging with main
-    # Can manually run if on a protected branch
+    # Only deploy when application code, dockefile, or manifest change on default branch.
+    # Deploy automatically when in a merge request on a protected branch and push has been run.
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       changes:
         - k8s/app/**/*
@@ -254,7 +248,8 @@ smoke:
   needs: ['deploy']
 
   rules:
-    # Only automatically runs after merging with main
+    # Only smoke when application code, dockefile, or manifest change on default branch.
+    # Smoke automatically when in a merge request on a protected branch
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       changes:
         - k8s/app/**/*
@@ -262,8 +257,6 @@ smoke:
         - requirements.txt
         - Dockerfile
         - .dockerignore
-
-    # Can manually run if on a protected branch
     - if:
         '$CI_PIPELINE_SOURCE == "merge_request_event" &&
         $CI_MERGE_REQUEST_SOURCE_BRANCH_PROTECTED == "true"'
