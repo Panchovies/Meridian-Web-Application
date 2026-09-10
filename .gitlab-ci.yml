@@ -111,6 +111,7 @@ build:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       changes:
+        - k8s/app/**/*
         - src/**/*
         - requirements.txt
         - Dockerfile
@@ -135,6 +136,7 @@ trivy:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       changes:
+        - k8s/app/**/*
         - src/**/*
         - requirements.txt
         - Dockerfile
@@ -157,6 +159,7 @@ push:
     # README, Stage 3: Push. Taken From Anish's Repository.
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       changes:
+        - k8s/app/**/*
         - src/**/*
         - requirements.txt
         - Dockerfile
