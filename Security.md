@@ -159,3 +159,11 @@ The resulting image passed the `Trivy` vulnerability scan, while the development
 environment dependencies were separately checked by `pip-audit`.
 
 ## Thursday, September 10th
+
+### Network Security
+
+- Added a 443 ingress rule to the ALB, it was missing previously
+- The egress was overly permissive so the `0.0.0.0/0` was scoped down to the
+  `5000` port, inside the VPC
+- Added a security group rule for the EKS cluster, allowing traffic to EKS nodes
+  from elsewhere inside the VPC
