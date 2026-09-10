@@ -52,6 +52,8 @@ checks:
     - pytest -q
     - echo "── gitleaks ─────────────────────────────────────"
     - gitleaks git --verbose --redact .
+    - echo "── pip-audit ─────────────────────────────────────"
+    - pip-audit --progress-spinner off
     - |
       if [ -n "$CI_MERGE_REQUEST_IID" ]; then
         echo "── commitlint (merge request commits) ───────────"
