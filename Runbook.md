@@ -397,15 +397,29 @@ kubectl rollout restart deployment/meridian-web-application
 
 ### What Is It
 
-`Terraform` is a service that allows us to create the entire cluster as well as other AWS services in one command. It simplifies the automation portion of application creation and allows us to manage and control everything with simple commands. 
+`Terraform` is a service that allows us to create the entire cluster as well as
+other AWS services in one command. It simplifies the automation portion of
+application creation and allows us to manage and control everything with simple
+commands.
 
 ### How We Use It
 
-We use it to create everything our application needs to run, whether that be the cluster, cluster add-ons, buckets for storage, or roles and policies. We also use it as a way to keep the state of our applications more remote adn sharable. The `terraform` state resides in a persistent bucket in AWS, this means that `terraform` will not destroy or create that bucket, but only hold the state in there, which allows terraform to know what is already created and destroyed across many machines.
+We use it to create everything our application needs to run, whether that be the
+cluster, cluster add-ons, buckets for storage, or roles and policies. We also
+use it as a way to keep the state of our applications more remote and sharable.
+The `terraform` state resides in a persistent bucket in AWS, this means that
+`terraform` will not destroy or create that bucket, but only hold the state in
+there, which allows terraform to know what is already created and destroyed
+across many machines.
 
 ### How To Run It
 
-Some things must be configued before using `terraform`. You need to have an S3 bucket set up in AWS ready to hold the state. Use these commands to create that bucket.
+Some things must be configured before using `terraform`.
+
+#### State Bucket
+
+You need to have an S3 bucket set up in AWS ready to hold the state. Use these
+commands to create that bucket.
 
 ```bash
 aws s3api create-bucket \
@@ -422,21 +436,96 @@ aws s3api put-public-access-block \
   BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
 ```
 
-These commands are made specifically for the `terraform` files in this repository, you may need to change the name to use your own AWS id number, since bucket names are static across AWS, so two buckets of the same name cannot exist, even on seperate AWS accounts.
+These commands are made specifically for the `terraform` files in this
+repository, you may need to change the name to use your own AWS id number, since
+bucket names are static across AWS, so two buckets of the same name cannot
+exist, even on separate AWS accounts.
 
-Your AWS user that `terraform` invoke must also have the correct permissions attached to create and destroy what it needs.
+#### `terraform apply/destroy` Permissions
 
-We create everything using `terraform apply` in the `terraform/` directory. Type in `yes` to proceed with the creation. You'll see multiple lines of different resources being created with time elapsed stamps. To destroy everything, run `terraform destroy` and type in `yes` to proceed. If you want to use `terraform` from the root directory, you can add the `-chdir=terraform/` flag. An example of this would be `terraform -chdir=terraform/ apply`.
+Your AWS user that `terraform` invokes must also have the correct permissions
+attached to create and destroy what it needs. You can find an example of these
+permissions in `terraform/policies/TerraformPolicy.json`.
+
+**Note:** The current example policy uses my personal AWS id and region, as well
+as the ECR, bucket, and cluster names outlined in the `Terraform` files. If you
+change the variables that establish those names or have a different id or
+region, you must change the policy to reflect that.
+
+#### GitLab CI Permissions
+
+You must create a separate user for your GitLab pipeline to use, this was the
+pipeline is not invoking your user which most likely has broader permissions for
+administrative use.
+
+Create this user by hand in the AWS console, IAM->Users->CreateUser
+
+Select 'Attach Policies Directly', and attach the policies that the pipeline
+needs to run. You can find an example of the permissions that the pipeline
+currently needs to run in `terraform/policies/GitLabPolicy.json`.
+
+**Note:** The current example policy uses my personal AWS id and region, as well
+as the ECR and cluster names outlined in the `Terraform` files. If you change
+the variables that establish those names or have a different id or region, you
+must change the policy to reflect that.
+
+Name it `GitLab-CI`.
+
+Create an access key for the user by selecting the user and clicking
+`Create Access Key`. This is what we will be inserting into the CI variables to
+give GitLab those permissions for access. Click on `AWS CLI` for reason and
+accept the terms for creation. When you create it, make sure to download the
+`.csv` file to always have the keys for retrieval later.
+
+Navigate to CI/CD in your repository settings and scroll down to Variables. Add
+two new variables, and make sure both are protected and masked:
+`AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`. The `AWS_ACCESS_KEY_ID` will
+start with `AKIA`. If you already have an `AWS_ACCESS_KEY_ID` and
+`AWS_SECRET_ACCESS_KEY`, then edit them and replace their values with the keys
+you created.
+
+Your GitLab pipeline will now use the `GitLab-CI` user permissions instead of
+your admin permissions.
+
+#### Creating With Terraform
+
+We create everything using `terraform apply` in the `terraform/` directory. Type
+in `yes` to proceed with the creation. You'll see multiple lines of different
+resources being created with time elapsed stamps. To destroy everything, run
+`terraform destroy` and type in `yes` to proceed. If you want to use `terraform`
+from the root directory, you can add the `-chdir=terraform/` flag. An example of
+this would be `terraform -chdir=terraform/ apply`.
 
 ### How To Diagnose It
 
-This is for specifically diagnosing `Terraform` errors. If something is happening after `Terreform` had either destroyed or created, then it is more likely an issue with Kubernetes, which can be diagnosed via the Kubernetes section or the `eksctl` section in `Configuration.md`, however some parts may be outdated.
+This is for specifically diagnosing `Terraform` errors. If something is
+happening after `Terreform` had either destroyed or created, then it is more
+likely an issue with Kubernetes, which can be diagnosed via the Kubernetes
+section or the `eksctl` section in `Configuration.md`, however some parts may be
+outdated.
 
-`Terraform` will often tell you exactly what failed when creating or destroying. Running `terraform plan` is a great way to see any possible issues before applying anything. Many times dependency loops or missing permissions can be found from the planning stage.
+`Terraform` will often tell you exactly what failed when creating or destroying.
+Running `terraform plan` is a great way to see any possible issues before
+applying anything. Many times dependency loops or missing permissions can be
+found from the planning stage.
 
 ### Common Bugs
 
-- **Permission Issues:** Many times when running `terraform apply` an error can pop up that says something about a user not having the correct permissions. This should not happen for any roles because this repository's `Terraform` creates the policies for those roles itself, so it could only have that error if you changed something about the roles. However, if it happens, it is most likely due to the user attached to `Terraform` not having the right permissions. It can be easily fixed by editing the policy `JSON` and adding whichever policy it says it needs for the resources it mentions.
+- **Permission Issues:** Many times when running `terraform apply` an error can
+  pop up that says something about a user not having the correct permissions.
+  This should not happen for any roles because this repository's `Terraform`
+  creates the policies for those roles itself, so it could only have that error
+  if you changed something about the roles. However, if it happens, it is most
+  likely due to the user attached to `Terraform` not having the right
+  permissions. It can be easily fixed by editing the policy `JSON` and adding
+  whichever policy it says it needs for the resources it mentions.
 
-- **Dependency Loops:** There should be no dependency errors with `Terraform` unless something about the current architecture is changed. `terraform plan` cannot usually catch dependecy errors, only dependecy loops. That is when a resource depends on a resource that is also depending on it; creating a loop of dependency. However it is possible for `Terraform` to make a mistake when creating resources and create something that should rely on another resource before that resource is created. To avoid this, make sure you know what each resource needs before being able to be created, and you can check the dependency chain before applying in `terraform plan`.
-
+- **Dependency Loops:** There should be no dependency errors with `Terraform`
+  unless something about the current architecture is changed. `terraform plan`
+  cannot usually catch dependency errors, only dependency loops. That is when a
+  resource depends on a resource that is also depending on it; creating a loop
+  of dependency. However it is possible for `Terraform` to make a mistake when
+  creating resources and create something that should rely on another resource
+  before that resource is created. To avoid this, make sure you know what each
+  resource needs before being able to be created, and you can check the
+  dependency chain before applying in `terraform plan`.
