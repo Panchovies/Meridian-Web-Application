@@ -300,3 +300,4 @@ Deploy applies the deployment manifests, inserting the correct ECR image using t
 **When:** On the default branch and when dockerfile, application code, or manifests are changed, or automatically on merge request events on protected branches. Only runs automatically if `push` was run manually.
 
 Runs a smoke test targeting the `/news` endpoint, checking if it returns a `200` status code without relying on the external API.
+
