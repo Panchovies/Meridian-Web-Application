@@ -75,6 +75,7 @@
       "Effect": "Allow",
       "Action": [
         "ec2:DescribeVpcs",
+        "ec2:DescribeVpcAttribute",
         "ec2:DescribeSubnets",
         "ec2:DescribeRouteTables",
         "ec2:DescribeNatGateways",
@@ -107,7 +108,7 @@
         "logs:ListTagsForResource",
         "logs:ListTagsLogGroup"
       ],
-      "Resource": "arn:aws:logs:us-east-1:163558211438:log-group:/aws/eks/meridian-cluster/*"
+      "Resource": "*"
     },
     {
       "Sid": "CloudWatchAlarmsRead",
@@ -149,7 +150,10 @@
     {
       "Sid": "SecretsManagerRead",
       "Effect": "Allow",
-      "Action": "secretsmanager:DescribeSecret",
+      "Action": [
+        "secretsmanager:DescribeSecret",
+        "secretsmanager:GetResourcePolicy"
+      ],
       "Resource": "arn:aws:secretsmanager:us-east-1:163558211438:secret:meridian-api-keys-*"
     }
   ]
