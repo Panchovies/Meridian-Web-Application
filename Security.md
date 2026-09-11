@@ -1,8 +1,8 @@
 # Vulnerability Report
 
-## `Trivy`
+## Wednesday, September 9th
 
-### Wednesday, September 9th
+### `Trivy`
 
 This was when `Trivy` was first implemented into the pipeline. Before that,
 there were no vulnerability checks.
@@ -87,7 +87,7 @@ RUN rm -rf \
 This removed the vulnerable copies of `msgpack` and `setuptools` from the
 runtime image and resolved the remaining `Trivy` findings.
 
-## `pip-audit`
+### `pip-audit`
 
 `pip-audit` was also installed as part of the pipeline to audit Python
 dependencies. Its findings were separate from the `Trivy` image scan because the
@@ -140,7 +140,7 @@ case, the failure needs to be distinguished from an application dependency
 vulnerability and addressed by updating or pinning the affected development
 tooling.
 
-## Final Result
+### Final Result
 
 The vulnerability work addressed the findings at three separate layers:
 
@@ -157,3 +157,36 @@ The vulnerability work addressed the findings at three separate layers:
 
 The resulting image passed the `Trivy` vulnerability scan, while the development
 environment dependencies were separately checked by `pip-audit`.
+
+## Thursday, September 10th
+
+### Network Security
+
+#### Security Groups
+
+Some rules in the security groups were too permissive, as well as some parts
+missing.
+
+- Opted to not use a 443 ingress, as there is nothing listening on that port.
+- The egress was overly permissive so the `0.0.0.0/0` was scoped down to the
+  `5000` port, inside the VPC.
+- The security group for `nodes_from_alb` was enough already; adding a group for
+  `VPC` is unnecessary and widens when the purpose is to narrow.
+
+#### Encryption
+
+Move the buckets from an S3-managed key to customer-managed KMS key with
+rotation on. Allows for more control over the key and the encryption.
+
+#### Audit Logging
+
+The cluster already had all 5 logging types enabled correctly.
+
+#### Public Access
+
+Public access for the S3 buckets was disabled, with all four flags set `true`.
+
+#### CloudWatch Logs Retention
+
+The retention period was set to 14 days, which is overkill for this environment.
+It was reduced to 7 days.

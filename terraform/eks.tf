@@ -3,7 +3,7 @@
 resource "aws_cloudwatch_log_group" "eks_cluster" {
   # The name must exactly match the format EKS expects
   name              = "/aws/eks/${var.cluster_name}/cluster"
-  retention_in_days = 14
+  retention_in_days = 7
 }
 
 ### EKS cluster ###
