@@ -14,10 +14,6 @@ resource "aws_eks_cluster" "main" {
   role_arn = aws_iam_role.eks_cluster.arn
   version  = var.cluster_version
 
-  access_config {
-    authentication_mode = "API_AND_CONFIG_MAP"
-  }
-
   vpc_config {
     subnet_ids = concat(
       aws_subnet.public[*].id,
@@ -34,24 +30,6 @@ resource "aws_eks_cluster" "main" {
     aws_iam_role_policy_attachment.eks_cluster_policy,
     aws_cloudwatch_log_group.eks_cluster,
   ]
-}
-
-### EKS access entry for GitLab CI user ###
-resource "aws_eks_access_entry" "ci" {
-  cluster_name  = aws_eks_cluster.main.name
-  principal_arn = "arn:aws:iam::163558211438:user/GitLab-CI"
-}
-
-resource "aws_eks_access_policy_association" "ci_edit_default_namespace" {
-  cluster_name  = aws_eks_cluster.main.name
-  principal_arn = "arn:aws:iam::163558211438:user/GitLab-CI"
-  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSEditPolicy"
-
-  access_scope {
-    type = "cluster"
-  }
-
-  depends_on = [aws_eks_access_entry.ci]
 }
 
 ### Managed node group ###
