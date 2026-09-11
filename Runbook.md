@@ -416,6 +416,13 @@ across many machines.
 
 Some things must be configured before using `terraform`.
 
+#### Variables
+
+There are variables outlined in `terraform/variables.tf`. You can fill them in
+locally by creating a file `terraform/terraform.tfvars` and assigning the
+variables values. Those variables must also be added to the GitLab variables,
+prefixed with `TF_VAR_`.
+
 #### State Bucket
 
 You need to have an S3 bucket set up in AWS ready to hold the state. Use these
@@ -469,7 +476,9 @@ as the ECR and cluster names outlined in the `Terraform` files. If you change
 the variables that establish those names or have a different id or region, you
 must change the policy to reflect that.
 
-Name it `GitLab-CI`.
+Name it `GitLab-CI`. Our `Terraform` files are expecting that username for their
+S3 KMS permissions policy, if it is different, make sure to change that, as well
+as the admin username.
 
 Create an access key for the user by selecting the user and clicking
 `Create Access Key`. This is what we will be inserting into the CI variables to
