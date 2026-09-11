@@ -1,5 +1,7 @@
-**This is from a legacy runbook. Has information from pervious lifecycles of development, like when working with `eksctl` or `minikube` Most of this is outdated for the current repo, and either you must
-change the repo to test locally or use an older commit**
+**This is from a legacy runbook. Has information from pervious lifecycles of
+development, like when working with `eksctl` or `minikube` Most of this is
+outdated for the current repo, and either you must change the repo to test
+locally or use an older commit**
 
 ## Kubernetes
 
@@ -478,4 +480,3 @@ kubectl rollout undo deployment/meridian-web-application
 ```
 
 Then debug the bad manifest/image separately before re-deploying.
-
