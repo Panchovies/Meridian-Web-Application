@@ -62,12 +62,14 @@
         "eks:DescribeNodegroup",
         "eks:DescribeAddon",
         "eks:ListAddons",
-        "eks:ListTagsForResource"
+        "eks:ListTagsForResource",
+        "eks:DescribePodIdentityAssociation"
       ],
       "Resource": [
         "arn:aws:eks:us-east-1:163558211438:cluster/meridian-cluster",
         "arn:aws:eks:us-east-1:163558211438:nodegroup/meridian-cluster/*/*",
-        "arn:aws:eks:us-east-1:163558211438:addon/meridian-cluster/*/*"
+        "arn:aws:eks:us-east-1:163558211438:addon/meridian-cluster/*/*",
+        "arn:aws:eks:us-east-1:163558211438:podidentityassociation/meridian-cluster/*"
       ]
     },
     {
@@ -81,7 +83,9 @@
         "ec2:DescribeNatGateways",
         "ec2:DescribeInternetGateways",
         "ec2:DescribeSecurityGroups",
+        "ec2:DescribeSecurityGroupRules",
         "ec2:DescribeAddresses",
+        "ec2:DescribeAddressesAttribute",
         "ec2:DescribeNetworkAcls",
         "ec2:DescribeTags"
       ],
@@ -94,6 +98,7 @@
         "elasticloadbalancing:DescribeLoadBalancers",
         "elasticloadbalancing:DescribeListeners",
         "elasticloadbalancing:DescribeTargetGroups",
+        "elasticloadbalancing:DescribeTargetGroupAttributes",
         "elasticloadbalancing:DescribeTargetHealth",
         "elasticloadbalancing:DescribeLoadBalancerAttributes",
         "elasticloadbalancing:DescribeTags"
@@ -113,7 +118,7 @@
     {
       "Sid": "CloudWatchAlarmsRead",
       "Effect": "Allow",
-      "Action": "cloudwatch:DescribeAlarms",
+      "Action": ["cloudwatch:DescribeAlarms", "cloudwatch:ListTagsForResource"],
       "Resource": "*"
     },
     {
@@ -143,9 +148,10 @@
         "kms:DescribeKey",
         "kms:GetKeyPolicy",
         "kms:GetKeyRotationStatus",
-        "kms:ListResourceTags"
+        "kms:ListResourceTags",
+        "kms:ListAliases"
       ],
-      "Resource": "arn:aws:kms:us-east-1:163558211438:key/*"
+      "Resource": "*"
     },
     {
       "Sid": "SecretsManagerRead",
