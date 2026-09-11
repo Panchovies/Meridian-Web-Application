@@ -10,8 +10,8 @@
     {
       "Sid": "TerraformStateAccess",
       "Effect": "Allow",
-      "Action": ["s3:GetObject", "s3:PutObject"],
-      "Resource": "arn:aws:s3:::meridian-terraform-state-163558211438/meridian/terraform.tfstate"
+      "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
+      "Resource": "arn:aws:s3:::meridian-terraform-state-163558211438/meridian/terraform.tfstate*"
     },
     {
       "Sid": "TerraformStateBucketList",
