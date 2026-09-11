@@ -282,11 +282,11 @@ resource "aws_iam_policy" "external_secrets" {
 data "aws_iam_policy_document" "s3_kms" {
   # Admin: currently the only user (testuser)
   statement {
-    sid    = "AllowKeyAdministration"
+    sid    = "EnableIAMUserPermissions"
     effect = "Allow"
     principals {
       type        = "AWS"
-      identifiers = [data.aws_caller_identity.current.arn]
+      identifiers = ["arn:aws:iam::${var.aws_account_id}:root"]
     }
     actions = [
       "kms:Create*",
@@ -303,25 +303,10 @@ data "aws_iam_policy_document" "s3_kms" {
       "kms:UntagResource",
       "kms:ScheduleKeyDeletion",
       "kms:CancelKeyDeletion",
-    ]
-    resources = ["*"]
-  }
-
-  # Usage: the EKS node role - the pods reading/writing trade data run on these
-  # nodes, so this is the principal that actually needs to encrypt/decrypt.
-  statement {
-    sid    = "AllowKeyUsageForS3"
-    effect = "Allow"
-    principals {
-      type        = "AWS"
-      identifiers = [aws_iam_role.eks_node.arn]
-    }
-    actions = [
       "kms:Encrypt",
       "kms:Decrypt",
       "kms:ReEncrypt*",
       "kms:GenerateDataKey*",
-      "kms:DescribeKey",
     ]
     resources = ["*"]
   }
@@ -353,7 +338,7 @@ data "aws_iam_policy_document" "trade_data" {
   }
 
   statement {
-    sid    = "DenyUnencryptedObjectUploads"
+    sid    = "DenyWrongEncryptionAlgorithm"
     effect = "Deny"
 
     principals {
@@ -365,9 +350,9 @@ data "aws_iam_policy_document" "trade_data" {
     resources = ["${aws_s3_bucket.trade_data.arn}/*"]
 
     condition {
-      test     = "StringNotEquals"
+      test     = "StringEquals"
       variable = "s3:x-amz-server-side-encryption"
-      values   = ["aws:kms"]
+      values   = ["AES256"]
     }
   }
 }
@@ -398,7 +383,7 @@ data "aws_iam_policy_document" "pipeline_artifacts" {
   }
 
   statement {
-    sid    = "DenyUnencryptedObjectUploads"
+    sid    = "DenyWrongEncryptionAlgorithm"
     effect = "Deny"
 
     principals {
@@ -410,9 +395,9 @@ data "aws_iam_policy_document" "pipeline_artifacts" {
     resources = ["${aws_s3_bucket.pipeline_artifacts.arn}/*"]
 
     condition {
-      test     = "StringNotEquals"
+      test     = "StringEquals"
       variable = "s3:x-amz-server-side-encryption"
-      values   = ["aws:kms"]
+      values   = ["AES256"]
     }
   }
 }
