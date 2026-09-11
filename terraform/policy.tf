@@ -286,7 +286,7 @@ data "aws_iam_policy_document" "s3_kms" {
     effect = "Allow"
     principals {
       type        = "AWS"
-      identifiers = ["arn:aws:iam::${var.aws_account_id}:root"]
+      identifiers = [data.aws_caller_identity.current.arn]
     }
     actions = [
       "kms:Create*",
