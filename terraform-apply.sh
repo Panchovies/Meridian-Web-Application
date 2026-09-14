@@ -15,7 +15,7 @@ for f in "${FILES[@]}"; do
     mv "$f" "$f.bak"
 done
 
-if ! terraform apply; then
+if ! terraform apply -auto-approve; then
     echo "First apply failed, restoring files..."
     for f in "${FILES[@]}"; do
         mv "$f.bak" "$f"
@@ -27,4 +27,4 @@ for f in "${FILES[@]}"; do
     mv "$f.bak" "$f"
 done
 
-terraform apply
+terraform apply -auto-approve

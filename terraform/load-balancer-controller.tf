@@ -5,7 +5,8 @@ resource "kubernetes_service_account" "aws_load_balancer_controller" {
   }
 
   depends_on = [
-    aws_eks_addon.pod_identity_agent
+    aws_eks_addon.pod_identity_agent,
+    aws_eks_access_policy_association.terraform_admin,
   ]
 }
 
@@ -39,6 +40,7 @@ resource "helm_release" "aws_load_balancer_controller" {
     aws_eks_pod_identity_association.aws_load_balancer_controller,
     kubernetes_service_account.aws_load_balancer_controller,
     aws_eks_node_group.main,
+    aws_eks_access_policy_association.terraform_admin,
   ]
 }
 
@@ -65,5 +67,6 @@ resource "kubectl_manifest" "meridian_tgb" {
   depends_on = [
     helm_release.aws_load_balancer_controller,
     aws_lb_target_group.meridian,
+    aws_eks_access_policy_association.terraform_admin,
   ]
 }

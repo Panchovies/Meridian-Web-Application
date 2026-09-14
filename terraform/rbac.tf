@@ -41,6 +41,10 @@ resource "kubectl_manifest" "gitlab_ci_alb_service_account_role" {
       }
     ]
   })
+
+  depends_on = [
+    aws_eks_access_policy_association.terraform_admin
+  ]
 }
 
 resource "kubectl_manifest" "gitlab_ci_alb_service_account_rolebinding" {
@@ -67,6 +71,10 @@ resource "kubectl_manifest" "gitlab_ci_alb_service_account_rolebinding" {
       }
     ]
   })
+
+  depends_on = [
+    aws_eks_access_policy_association.terraform_admin
+  ]
 }
 
 
@@ -104,6 +112,10 @@ resource "kubectl_manifest" "gitlab_ci_namespace_role" {
       }
     ]
   })
+
+  depends_on = [
+    aws_eks_access_policy_association.terraform_admin
+  ]
 }
 
 resource "kubectl_manifest" "gitlab_ci_namespace_rolebinding" {
@@ -129,6 +141,10 @@ resource "kubectl_manifest" "gitlab_ci_namespace_rolebinding" {
       }
     ]
   })
+
+  depends_on = [
+    aws_eks_access_policy_association.terraform_admin
+  ]
 }
 
 
@@ -173,6 +189,10 @@ resource "kubectl_manifest" "gitlab_ci_external_secrets_service_account_role" {
       }
     ]
   })
+
+  depends_on = [
+    aws_eks_access_policy_association.terraform_admin
+  ]
 }
 
 resource "kubectl_manifest" "gitlab_ci_external_secrets_service_account_rolebinding" {
@@ -199,6 +219,10 @@ resource "kubectl_manifest" "gitlab_ci_external_secrets_service_account_rolebind
       }
     ]
   })
+
+  depends_on = [
+    aws_eks_access_policy_association.terraform_admin
+  ]
 }
 
 
@@ -241,6 +265,10 @@ resource "kubectl_manifest" "gitlab_ci_custom_resources_role" {
       }
     ]
   })
+
+  depends_on = [
+    aws_eks_access_policy_association.terraform_admin
+  ]
 }
 
 resource "kubectl_manifest" "gitlab_ci_custom_resources_rolebinding" {
@@ -267,4 +295,8 @@ resource "kubectl_manifest" "gitlab_ci_custom_resources_rolebinding" {
       }
     ]
   })
+
+  depends_on = [
+    aws_eks_access_policy_association.terraform_admin
+  ]
 }
