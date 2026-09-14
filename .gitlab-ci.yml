@@ -90,6 +90,7 @@ terraform-plan:
         $CI_MERGE_REQUEST_SOURCE_BRANCH_PROTECTED == "true"'
   script:
     - aws sts get-caller-identity
+    - terraform version
     - cd terraform
     - terraform init -input=false
     - terraform validate
