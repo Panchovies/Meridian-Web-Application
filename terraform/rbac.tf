@@ -23,6 +23,11 @@ resource "kubectl_manifest" "gitlab_ci_alb_service_account_role" {
         verbs         = ["get"]
       },
       {
+        apiGroups = [""]
+        resources = ["secrets"]
+        verbs     = ["get", "list"]
+      },
+      {
         apiGroups     = ["rbac.authorization.k8s.io"]
         resources     = ["roles"]
         resourceNames = ["gitlab-ci-alb-service-account"]
@@ -148,6 +153,11 @@ resource "kubectl_manifest" "gitlab_ci_external_secrets_service_account_role" {
         resources     = ["serviceaccounts"]
         resourceNames = ["external-secrets"]
         verbs         = ["get"]
+      },
+      {
+        apiGroups = [""]
+        resources = ["secrets"]
+        verbs     = ["get"]
       },
       {
         apiGroups     = ["rbac.authorization.k8s.io"]

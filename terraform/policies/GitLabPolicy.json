@@ -14,6 +14,7 @@
         "ecr:DescribeRepositories",
         "ecr:GetRepositoryPolicy",
         "ecr:GetLifecyclePolicy",
+        "ecr:BatchGetImage",
         "ecr:ListTagsForResource",
         "ecr:BatchCheckLayerAvailability",
         "ecr:InitiateLayerUpload",
@@ -33,7 +34,11 @@
       "Sid": "TerraformStateBucketList",
       "Effect": "Allow",
       "Action": "s3:ListBucket",
-      "Resource": "arn:aws:s3:::meridian-terraform-state-163558211438"
+      "Resource": [
+        "arn:aws:s3:::meridian-terraform-state-163558211438",
+        "arn:aws:s3:::meridian-trade-data-163558211438",
+        "arn:aws:s3:::meridian-pipeline-artifacts-163558211438"
+      ]
     },
     {
       "Sid": "S3BucketConfigRead",
@@ -47,7 +52,14 @@
         "s3:GetBucketTagging",
         "s3:GetBucketLogging",
         "s3:GetBucketOwnershipControls",
-        "s3:GetBucketLocation"
+        "s3:GetBucketLocation",
+        "s3:GetBucketCors",
+        "s3:GetBucketWebsite",
+        "s3:GetAccelerateConfiguration",
+        "s3:GetBucketRequestPayment",
+        "s3:GetLifecycleConfiguration",
+        "s3:GetReplicationConfiguration",
+        "s3:GetBucketObjectLockConfiguration"
       ],
       "Resource": [
         "arn:aws:s3:::meridian-trade-data-163558211438",
