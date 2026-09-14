@@ -498,12 +498,10 @@ your admin permissions.
 
 #### Creating With Terraform
 
-We create everything using `terraform apply` in the `terraform/` directory. Type
-in `yes` to proceed with the creation. You'll see multiple lines of different
-resources being created with time elapsed stamps. To destroy everything, run
-`terraform destroy` and type in `yes` to proceed. If you want to use `terraform`
-from the root directory, you can add the `-chdir=terraform/` flag. An example of
-this would be `terraform -chdir=terraform/ apply`.
+Run the `terraform-apply.sh` and `terraform-destroy.sh` scripts. More details in
+the
+[README](https://gitlab.com/mcm-delivery-service-26-08/francisco_zenklusen_w1/-/blob/main/README.md)
+under the `Deploying With Terraform` section.
 
 ### How To Diagnose It
 

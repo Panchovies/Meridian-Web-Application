@@ -227,11 +227,16 @@ deploying with minikube
 
 ## Deploying With `Terraform`
 
-Repository contains a `terraform/` directory where `terraform apply` can be run
-to bring up the entire cluster along with any add-ons from nothing.
-`terraform destroy` can be run to destroy everything created by
-`terraform apply` to make sure nothing is being charged overnight when not in
-use.
+This repository uses a two stage apply due to Kubernetes services restrictions.
+Thus, some parts need to be created by Terraform before other parts. There is a
+script `terraform-apply.sh` provided that knows which `.tf` files cannot run in
+the first stage. Running from the root will create the entire cluster and all
+add-ons itself. Running `terraform-destroy.sh` will destroy everything created
+by Terraform.
+
+Both of these will auto-approve, so it is recommended to run
+`terraform -chdir=terraform plan` from the root to see what will be created or
+destroyed.
 
 ## CI Pipeline
 
