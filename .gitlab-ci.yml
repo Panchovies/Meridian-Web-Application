@@ -200,14 +200,6 @@ deploy:
     - aws eks update-kubeconfig --region "$AWS_DEFAULT_REGION" --name
       "$EKS_CLUSTER_NAME"
 
-    # Checks if the cluster is active, fails if it isn't
-    # COMMENTED OUT FOR TESTING
-    #- |
-    #  if ! kubectl cluster-info --request-timeout=10s > /dev/null 2>&1; then
-    #    echo "ERROR: Cannot reach EKS cluster '$EKS_CLUSTER_NAME'. Is it running? See RUNBOOK.md to start it before deploying."
-    #    exit 1
-    #  fi
-
   script:
     # Applies the manifests after setting the image variable
 
