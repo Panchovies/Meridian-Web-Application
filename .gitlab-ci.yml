@@ -89,6 +89,7 @@ terraform-plan:
         '$CI_PIPELINE_SOURCE == "merge_request_event" &&
         $CI_MERGE_REQUEST_SOURCE_BRANCH_PROTECTED == "true"'
   script:
+    - aws sts get-caller-identity
     - cd terraform
     - terraform init -input=false
     - terraform validate
