@@ -56,9 +56,9 @@ resource "kubectl_manifest" "gitlab_ci_alb_service_account_rolebinding" {
 
     subjects = [
       {
-        kind      = "Group"
-        name      = "gitlab-ci"
-        apiGroup  = "rbac.authorization.k8s.io"
+        kind     = "Group"
+        name     = "gitlab-ci"
+        apiGroup = "rbac.authorization.k8s.io"
       }
     ]
   })
@@ -118,9 +118,9 @@ resource "kubectl_manifest" "gitlab_ci_namespace_rolebinding" {
 
     subjects = [
       {
-        kind      = "Group"
-        name      = "gitlab-ci"
-        apiGroup  = "rbac.authorization.k8s.io"
+        kind     = "Group"
+        name     = "gitlab-ci"
+        apiGroup = "rbac.authorization.k8s.io"
       }
     ]
   })
@@ -183,9 +183,9 @@ resource "kubectl_manifest" "gitlab_ci_external_secrets_service_account_rolebind
 
     subjects = [
       {
-        kind      = "Group"
-        name      = "gitlab-ci"
-        apiGroup  = "rbac.authorization.k8s.io"
+        kind     = "Group"
+        name     = "gitlab-ci"
+        apiGroup = "rbac.authorization.k8s.io"
       }
     ]
   })
@@ -251,9 +251,9 @@ resource "kubectl_manifest" "gitlab_ci_custom_resources_rolebinding" {
 
     subjects = [
       {
-        kind      = "Group"
-        name      = "gitlab-ci"
-        apiGroup  = "rbac.authorization.k8s.io"
+        kind     = "Group"
+        name     = "gitlab-ci"
+        apiGroup = "rbac.authorization.k8s.io"
       }
     ]
   })
