@@ -280,7 +280,6 @@ resource "aws_iam_policy" "external_secrets" {
 
 ### KMS policy for S3 bucket encryption ###
 data "aws_iam_policy_document" "s3_kms" {
-  # Admin: currently the only user (testuser)
   statement {
     sid    = "EnableIAMUserPermissions"
     effect = "Allow"
@@ -289,24 +288,27 @@ data "aws_iam_policy_document" "s3_kms" {
       identifiers = ["arn:aws:iam::${var.aws_account_id}:root"]
     }
     actions = [
-      "kms:Create*",
-      "kms:Describe*",
-      "kms:Enable*",
-      "kms:List*",
-      "kms:Put*",
-      "kms:Update*",
-      "kms:Revoke*",
-      "kms:Disable*",
-      "kms:Get*",
-      "kms:Delete*",
-      "kms:TagResource",
-      "kms:UntagResource",
-      "kms:ScheduleKeyDeletion",
-      "kms:CancelKeyDeletion",
-      "kms:Encrypt",
-      "kms:Decrypt",
-      "kms:ReEncrypt*",
+      "kms:Create*", "kms:Describe*", "kms:Enable*", "kms:List*", "kms:Put*",
+      "kms:Update*", "kms:Revoke*", "kms:Disable*", "kms:Get*", "kms:Delete*",
+      "kms:TagResource", "kms:UntagResource", "kms:ScheduleKeyDeletion",
+      "kms:CancelKeyDeletion", "kms:Encrypt", "kms:Decrypt", "kms:ReEncrypt*",
       "kms:GenerateDataKey*",
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "AllowGitLabCIReadOnly"
+    effect = "Allow"
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:aws:iam::163558211438:user/${var.gitlab_ci_user_name}"]
+    }
+    actions = [
+      "kms:DescribeKey",
+      "kms:GetKeyPolicy",
+      "kms:GetKeyRotationStatus",
+      "kms:ListResourceTags",
     ]
     resources = ["*"]
   }

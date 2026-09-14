@@ -393,257 +393,40 @@ kubectl rollout restart deployment/meridian-web-application
   was never created, or you deleted it. Re-run the `kubectl create secret`
   command found in the `cluster_runner`.
 
-## eksctl
+## `Terraform`
 
 ### What Is It
 
-`eksctl` is a command-line tool for creating and managing Amazon EKS clusters.
-It simplifies many of the AWS and Kubernetes configuration steps required to set
-up an EKS cluster.
+`Terraform` is a service that allows us to create the entire cluster as well as
+other AWS services in one command. It simplifies the automation portion of
+application creation and allows us to manage and control everything with simple
+commands.
 
 ### How We Use It
 
-We use `eksctl` to create our cluster from the command line as well as install
-Add-ons for CloudWatch. Once we create the cluster we can keep it running with
-all the nodes active, but this spends a lot of money in our AWS account. To
-reduce the spending while not actively testing or using, we can scale down the
-nodes using
-
-```bash
-eksctl scale nodegroup --cluster meridian-cluster --name standard-workers --nodes 0 --nodes-min 0 --nodes-max 5
-```
-
-then to scale them back up
-
-```bash
-eksctl scale nodegroup --cluster meridian-cluster --name standard-workers --nodes 4 --nodes-min 3 --nodes-max 5
-```
-
-We can also delete the cluster to reduce as much spending as possible, however
-this gets rid of all our Add-ons, changes the hostname for whenever we decide to
-recreate, and when we do recreate the cluster it takes a long time to set
-everything up back to its original state.
+We use it to create everything our application needs to run, whether that be the
+cluster, cluster add-ons, buckets for storage, or roles and policies. We also
+use it as a way to keep the state of our applications more remote and sharable.
+The `terraform` state resides in a persistent bucket in AWS, this means that
+`terraform` will not destroy or create that bucket, but only hold the state in
+there, which allows terraform to know what is already created and destroyed
+across many machines.
 
 ### How To Run It
 
-All of the setup commands exist within an example shell script called
-`cluster_runner_example.sh`. Before running it, you must replace the example API
-key with an actual API key from [NewsAPI](https://newsapi.org/) and replace the
-placeholder account ID with your AWS account ID
+Some things must be configured before using `terraform`.
 
-Running this shell script from the root of the repo will:
+#### Variables
 
-- Create the cluster with two `t3.small` type managed nodes
-- Update `kubectl` to point at the cluster
-- Creates the AWS Load Balancer Controller
-- Add the API key to `meridian-api-keys`
-- Apply the manifests in `k8s/app/`
-- Add the necessary Add-ons to use CloudWatch
-- Restarts the `High 5XX Rate` alarm in CloudWatch to watch the correct metric
+There are variables outlined in `terraform/variables.tf`. You can fill them in
+locally by creating a file `terraform/terraform.tfvars` and assigning the
+variables values. Those variables must also be added to the GitLab variables,
+prefixed with `TF_VAR_`.
 
-This reduces the amount of work needed to start the cluster significantly.
+#### State Bucket
 
-You can find the hostname for the application by running:
-
-```bash
-kubectl get ingress
-```
-
-and entering the URL under the `ADDRESS` column.
-
-**Important**: Make sure you start the URL with `http`, not `https`, as this
-runs insecurely on port 80.
-
-There is also a shell script called `cluster_stopper.sh` which deletes the
-LoadBalancer and then the cluster. Recommended to only delete the cluster if
-there will be multiple days when it is not in use.
-
-### How We Diagnose It
-
-#### Check cluster health
-
-There is a shell script `ops/health-check.sh` that checks the health of the full
-stack in sequence. It makes sure that kubectl can connect to the EKS cluster,
-that all expected pods are in Running state, that the AWS Load Balancer URL
-returns 200 from the health check endpoint, and that no CloudWatch alarms are
-currently in alarm state.
-
-Run it with `./ops/health-check.sh` and it will notify you if anything is
-unhealthy.
-
-Start by confirming the nodes are up and ready:
-
-```bash
-kubectl get nodes
-```
-
-Look for `STATUS` = `Ready` on every node. If a node is `NotReady`, give it a
-couple minutes (it may still be joining), then check
-`kubectl describe node <node-name>` for the reason under `Conditions`.
-
-Next, check that all pods across all namespaces are healthy:
-
-```bash
-kubectl get pods -A
-```
-
-You want everything `Running` or `Completed`. Anything stuck in `Pending`,
-`CrashLoopBackOff`, `ImagePullBackOff`, or with high `RESTARTS` needs a closer
-look — run `kubectl describe pod <pod-name> -n <namespace>` and check the
-`Events` section at the bottom.
-
-#### Get Deployment Status
-
-A script `ops/deployment-status.py` is available to you and prints a formatted
-status report featuring the following:
-
-- Cluster name
-- Node count and status
-- Deployment name
-- Replica count
-- Current image tag deployed
-- Timestamp of the most recent deployment
-
-Run from root using `./ops/deployment-status.py`
-
-#### Get Pipeline Summary
-
-A script `ops/pipeline-summary.py` is available to you and prints the last five
-pipelines, their elapsed times, and the stages they failed at, if any.
-
-Requires a GitLab token with read permissions for Project, Pipeline, and Job
-
-GitLab token must be stored in a `.gitlab-token` file
-
-Run from root using `./ops/deployment-status.py`
-
-#### Delete Non-Running Pods
-
-A script `ops/restart-unhealthy-pods.sh` is available to you and deletes any
-pods that are not running. Not recommended to use if you just applied or
-restarted your deployment.
-
-Run from root using `./ops/restart-unhealthy-pods.sh`
-
-#### Roll back a bad deployment
-
-If a new deploy is broken (crashing pods, failing health checks, bad app
-behavior), roll back to the previous working revision instead of debugging live:
-
-```bash
-kubectl rollout undo deployment/meridian-web-application
-```
-
-This reverts to the previous ReplicaSet. Confirm it worked:
-
-```bash
-kubectl rollout status deployment/meridian-web-application
-```
-
-To roll back further than one revision, check history first with
-`kubectl rollout history deployment/meridian-web-application`, then target a
-specific revision with
-`kubectl rollout undo deployment/meridian-web-application --to-revision=<N>`.
-
-#### Read application logs
-
-For a quick look at the current pod's logs:
-
-```bash
-kubectl logs <pod-name>
-```
-
-If the pod restarted and you need to see why it crashed, check the previous
-container's logs:
-
-```bash
-kubectl logs <pod-name> --previous
-```
-
-To tail logs live while reproducing an issue:
-
-```bash
-kubectl logs -f <pod-name>
-```
-
-If you don't know the pod name, list them first with
-`kubectl get pods -l app=meridian-web-application`, or stream logs across all
-pods for the deployment at once:
-
-```bash
-kubectl logs -f -l app=meridian-web-application --all-containers=true
-```
-
-For anything beyond a single pod's recent logs (historical logs, log search,
-logs after a pod has been deleted), use CloudWatch Container Insights — see the
-Observability section of this runbook.
-
-#### CloudWatch
-
-CloudWatch will be set up and ready to use if you ran the `cluster_runner.sh`
-script. Navigate to the AWS console and search for "CloudWatch". There will be 3
-alarms in place:
-
-- **CPU Utilization**: Alerts when cluster CPU utilization exceeds 80% for 5
-  consecutive minutes.
-- **High 5XX Rate**: Alerts when 5XX responses exceed 1% of total requests.
-- **Over 3 Restarts**: Alerts when total pod restarts across all pods are
-  over 3.
-
-### Common Bugs
-
-- **Deploy Stage Fails On Pipeline**: *
-
-Start by reading the job log in GitLab — the deploy stage fails at different
-points for different reasons, and the log tells you which:
-
-- **`kubectl` commands fail immediately (`connection refused`,
-  `Unable to connect to the server`)** — the runner can't reach the cluster.
-  Usually means the kubeconfig step didn't run or the cluster's API
-  endpoint/security group doesn't allow the runner's IP. Confirm the
-  `aws eks update-kubeconfig` step ran successfully earlier in the job.
-
-- **`kubectl apply` fails on a specific manifest** — read the error, it's almost
-  always a YAML syntax issue or an immutable field being changed (e.g.
-  `selector` on a Service). Fix the manifest in `k8s/app/` and re-run.
-
-- **`kubectl apply` succeeds but `rollout status` times out** — the new pods
-  aren't reaching `Ready`. This is the most common failure and isn't really a
-  pipeline problem, it's an app problem surfacing in the pipeline. Check:
-
-```bash
-  kubectl get pods -l app=meridian-web-application
-  kubectl describe pod <pod-name>
-  kubectl logs <pod-name>
-```
-
-Common causes: bad image tag (`ImagePullBackOff` — check ECR auth and that the
-SHA tag actually got pushed), app crashing on startup (`CrashLoopBackOff` —
-check logs for a stack trace), or a failing readiness probe (app is up but
-`/health` isn't returning 200 yet).
-
-- **`needs: [push]` related failure on a manifest-only commit** — the `push` job
-  is `optional: true` in `needs`, so a deploy triggered by a manifest change
-  alone (no image build) should still run. If it's failing here, check that the
-  `changes:` filter on the deploy stage still matches `k8s/app/**/*`.
-
-**If the rollout is broken and you need the app back up now**, don't wait on
-debugging — roll back:
-
-```bash
-kubectl rollout undo deployment/meridian-web-application
-```
-
-Then debug the bad manifest/image separately before re-deploying.
-
-## `Terraform`
-
-### Bootstrapping the backend itself
-
-The S3 bucket that holds the Terraform state can't be created by the Terraform
-run that then uses it as a backend - that run has nowhere to put its own state
-until the bucket already exists. I created it by hand through the AWS CLI rather
-than in a second small Terraform project with its own local state:
+You need to have an S3 bucket set up in AWS ready to hold the state. Use these
+commands to create that bucket.
 
 ```bash
 aws s3api create-bucket \
@@ -659,3 +442,93 @@ aws s3api put-public-access-block \
   --public-access-block-configuration \
   BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
 ```
+
+These commands are made specifically for the `terraform` files in this
+repository, you may need to change the name to use your own AWS id number, since
+bucket names are static across AWS, so two buckets of the same name cannot
+exist, even on separate AWS accounts.
+
+#### `terraform apply/destroy` Permissions
+
+Your AWS user that `terraform` invokes must also have the correct permissions
+attached to create and destroy what it needs. This user should be given
+`AdministratorAccess`, as it is the admin user and does not need to adhere to
+least privilege.
+
+#### GitLab CI Permissions
+
+You must create a separate user for your GitLab pipeline to use, this was the
+pipeline is not invoking your user which most likely has broader permissions for
+administrative use.
+
+Create this user by hand in the AWS console, IAM->Users->CreateUser
+
+Select 'Attach Policies Directly', and attach the policies that the pipeline
+needs to run. You can find an example of the permissions that the pipeline
+currently needs to run in `terraform/policies/GitLabPolicy.json`.
+
+**Note:** The current example policy uses my personal AWS id and region, as well
+as the ECR and cluster names outlined in the `Terraform` files. If you change
+the variables that establish those names or have a different id or region, you
+must change the policy to reflect that.
+
+Name it `GitLab-CI`. Our `Terraform` files are expecting that username for their
+S3 KMS permissions policy, if it is different, make sure to change that, as well
+as the admin username.
+
+Create an access key for the user by selecting the user and clicking
+`Create Access Key`. This is what we will be inserting into the CI variables to
+give GitLab those permissions for access. Click on `AWS CLI` for reason and
+accept the terms for creation. When you create it, make sure to download the
+`.csv` file to always have the keys for retrieval later.
+
+Navigate to CI/CD in your repository settings and scroll down to Variables. Add
+two new variables, and make sure both are protected and masked:
+`AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`. The `AWS_ACCESS_KEY_ID` will
+start with `AKIA`. If you already have an `AWS_ACCESS_KEY_ID` and
+`AWS_SECRET_ACCESS_KEY`, then edit them and replace their values with the keys
+you created.
+
+Your GitLab pipeline will now use the `GitLab-CI` user permissions instead of
+your admin permissions.
+
+#### Creating With Terraform
+
+Run the `terraform-apply.sh` and `terraform-destroy.sh` scripts. More details in
+the
+[README](https://gitlab.com/mcm-delivery-service-26-08/francisco_zenklusen_w1/-/blob/main/README.md)
+under the `Deploying With Terraform` section.
+
+### How To Diagnose It
+
+This is for specifically diagnosing `Terraform` errors. If something is
+happening after `Terreform` had either destroyed or created, then it is more
+likely an issue with Kubernetes, which can be diagnosed via the Kubernetes
+section or the `eksctl` section in `Configuration.md`, however some parts may be
+outdated.
+
+`Terraform` will often tell you exactly what failed when creating or destroying.
+Running `terraform plan` is a great way to see any possible issues before
+applying anything. Many times dependency loops or missing permissions can be
+found from the planning stage.
+
+### Common Bugs
+
+- **Permission Issues:** Many times when running `terraform apply` an error can
+  pop up that says something about a user not having the correct permissions.
+  This should not happen for any roles because this repository's `Terraform`
+  creates the policies for those roles itself, so it could only have that error
+  if you changed something about the roles. However, if it happens, it is most
+  likely due to the user attached to `Terraform` not having the right
+  permissions. It can be easily fixed by editing the policy `JSON` and adding
+  whichever policy it says it needs for the resources it mentions.
+
+- **Dependency Loops:** There should be no dependency errors with `Terraform`
+  unless something about the current architecture is changed. `terraform plan`
+  cannot usually catch dependency errors, only dependency loops. That is when a
+  resource depends on a resource that is also depending on it; creating a loop
+  of dependency. However it is possible for `Terraform` to make a mistake when
+  creating resources and create something that should rely on another resource
+  before that resource is created. To avoid this, make sure you know what each
+  resource needs before being able to be created, and you can check the
+  dependency chain before applying in `terraform plan`.

@@ -63,32 +63,6 @@ resource "aws_lb_listener" "meridian_http" {
   }
 }
 
-### Replaces ingress ###
-
-resource "kubectl_manifest" "meridian_tgb" {
-  yaml_body = yamlencode({
-    apiVersion = "elbv2.k8s.aws/v1beta1"
-    kind       = "TargetGroupBinding"
-    metadata = {
-      name      = "${var.application_service_name}-tgb"
-      namespace = "default"
-    }
-    spec = {
-      serviceRef = {
-        name = var.application_service_name
-        port = 80
-      }
-      targetGroupARN = aws_lb_target_group.meridian.arn
-      targetType     = "ip"
-    }
-  })
-
-  depends_on = [
-    helm_release.aws_load_balancer_controller,
-    aws_lb_target_group.meridian,
-  ]
-}
-
 ### Allows traffic from ALB to EKS nodes on port 5000 ### 
 resource "aws_security_group_rule" "nodes_from_alb" {
   type                     = "ingress"
