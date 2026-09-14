@@ -91,9 +91,9 @@ terraform-plan:
   script:
     - aws sts get-caller-identity
     - terraform version
-    - terraform state show aws_s3_bucket.pipeline_artifacts
     - cd terraform
     - terraform init -input=false
+    - terraform state show aws_s3_bucket.pipeline_artifacts
     - terraform validate
     - terraform plan -input=false -lock-timeout=5m
 
