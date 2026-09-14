@@ -63,17 +63,20 @@
         "eks:DescribeAddon",
         "eks:ListAddons",
         "eks:ListTagsForResource",
-        "eks:DescribeAccessEntry",
-        "eks:ListAssociatedAccessPolicies",
         "eks:DescribePodIdentityAssociation"
       ],
       "Resource": [
         "arn:aws:eks:us-east-1:163558211438:cluster/meridian-cluster",
         "arn:aws:eks:us-east-1:163558211438:nodegroup/meridian-cluster/*/*",
         "arn:aws:eks:us-east-1:163558211438:addon/meridian-cluster/*/*",
-        "arn:aws:eks:us-east-1:163558211438:access-entry/meridian-cluster/*",
         "arn:aws:eks:us-east-1:163558211438:podidentityassociation/meridian-cluster/*"
       ]
+    },
+    {
+      "Sid": "EksAccessEntryRead",
+      "Effect": "Allow",
+      "Action": ["eks:DescribeAccessEntry", "eks:ListAssociatedAccessPolicies"],
+      "Resource": "arn:aws:eks:us-east-1:163558211438:access-entry/meridian-cluster/*"
     },
     {
       "Sid": "Ec2NetworkRead",
