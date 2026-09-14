@@ -451,13 +451,9 @@ exist, even on separate AWS accounts.
 #### `terraform apply/destroy` Permissions
 
 Your AWS user that `terraform` invokes must also have the correct permissions
-attached to create and destroy what it needs. You can find an example of these
-permissions in `terraform/policies/TerraformPolicy.json`.
-
-**Note:** The current example policy uses my personal AWS id and region, as well
-as the ECR, bucket, and cluster names outlined in the `Terraform` files. If you
-change the variables that establish those names or have a different id or
-region, you must change the policy to reflect that.
+attached to create and destroy what it needs. This user should be given
+`AdministratorAccess`, as it is the admin user and does not need to adhere to
+least privilege.
 
 #### GitLab CI Permissions
 

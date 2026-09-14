@@ -229,10 +229,11 @@ deploying with minikube
 
 This repository uses a two stage apply due to Kubernetes services restrictions.
 Thus, some parts need to be created by Terraform before other parts. There is a
-script `terraform-apply.sh` provided that knows which `.tf` files cannot run in
-the first stage. Running from the root will create the entire cluster and all
-add-ons itself. Running `terraform-destroy.sh` will destroy everything created
-by Terraform.
+script `terraform-apply.sh` provided that will create the cluster first then
+everything else. It needs intermittent approval on every apply. Use that to
+check if the correct resources are being built. Running from the root will
+create the entire cluster and all add-ons itself. Running `terraform-destroy.sh`
+will destroy everything created by Terraform.
 
 Both of these will auto-approve, so it is recommended to run
 `terraform -chdir=terraform plan` from the root to see what will be created or
