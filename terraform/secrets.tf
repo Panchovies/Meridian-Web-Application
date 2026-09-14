@@ -34,7 +34,7 @@ resource "helm_release" "external_secrets" {
   create_namespace = false
 
   repository = "https://charts.external-secrets.io"
-  chart      = var.secrets_manager_name
+  chart      = "external-secrets"
 
   values = [
     yamlencode({
