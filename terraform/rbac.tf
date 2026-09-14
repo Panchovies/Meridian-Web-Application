@@ -214,7 +214,7 @@ resource "kubectl_manifest" "gitlab_ci_custom_resources_role" {
       },
       {
         apiGroups = ["external-secrets.io"]
-        resources = ["secretstores"]
+        resources = ["secretstores", "externalsecrets"]
         verbs     = ["get"]
       },
       {
