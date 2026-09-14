@@ -63,12 +63,14 @@
         "eks:DescribeAddon",
         "eks:ListAddons",
         "eks:ListTagsForResource",
+        "eks:DescribeAccessEntry",
         "eks:DescribePodIdentityAssociation"
       ],
       "Resource": [
         "arn:aws:eks:us-east-1:163558211438:cluster/meridian-cluster",
         "arn:aws:eks:us-east-1:163558211438:nodegroup/meridian-cluster/*/*",
         "arn:aws:eks:us-east-1:163558211438:addon/meridian-cluster/*/*",
+        "arn:aws:eks:us-east-1:163558211438:access-entry/meridian-cluster/*",
         "arn:aws:eks:us-east-1:163558211438:podidentityassociation/meridian-cluster/*"
       ]
     },
