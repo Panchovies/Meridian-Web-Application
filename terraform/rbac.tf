@@ -173,7 +173,7 @@ resource "kubectl_manifest" "gitlab_ci_external_secrets_service_account_role" {
       {
         apiGroups = [""]
         resources = ["secrets"]
-        verbs     = ["get"]
+        verbs     = ["get", "list"]
       },
       {
         apiGroups     = ["rbac.authorization.k8s.io"]
