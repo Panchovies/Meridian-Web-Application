@@ -16,7 +16,6 @@ resource "aws_eks_addon" "cloudwatch_observability" {
   depends_on = [
     aws_eks_node_group.main,
     aws_eks_pod_identity_association.cloudwatch_observability,
-    helm_release.aws_load_balancer_controller,
   ]
 }
 
@@ -157,6 +156,5 @@ resource "aws_eks_addon" "metrics_server" {
 
   depends_on = [
     aws_eks_node_group.main,
-    helm_release.aws_load_balancer_controller,
   ]
 }

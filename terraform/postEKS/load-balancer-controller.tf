@@ -1,6 +1,6 @@
 resource "kubernetes_service_account" "aws_load_balancer_controller" {
   metadata {
-    name      = "aws-load-balancer-controller"
+    name      = var.ALB_name
     namespace = "kube-system"
   }
 
@@ -10,9 +10,9 @@ resource "kubernetes_service_account" "aws_load_balancer_controller" {
 }
 
 resource "helm_release" "aws_load_balancer_controller" {
-  name       = "aws-load-balancer-controller"
+  name       = var.ALB_name
   repository = "https://aws.github.io/eks-charts"
-  chart      = "aws-load-balancer-controller"
+  chart      = var.ALB_name
   namespace  = "kube-system"
   version    = "3.5.0"
 
@@ -39,5 +39,31 @@ resource "helm_release" "aws_load_balancer_controller" {
     aws_eks_pod_identity_association.aws_load_balancer_controller,
     kubernetes_service_account.aws_load_balancer_controller,
     aws_eks_node_group.main,
+  ]
+}
+
+### Replaces ingress ###
+
+resource "kubectl_manifest" "meridian_tgb" {
+  yaml_body = yamlencode({
+    apiVersion = "elbv2.k8s.aws/v1beta1"
+    kind       = "TargetGroupBinding"
+    metadata = {
+      name      = "${var.application_service_name}-tgb"
+      namespace = "default"
+    }
+    spec = {
+      serviceRef = {
+        name = var.application_service_name
+        port = 80
+      }
+      targetGroupARN = aws_lb_target_group.meridian.arn
+      targetType     = "ip"
+    }
+  })
+
+  depends_on = [
+    helm_release.aws_load_balancer_controller,
+    aws_lb_target_group.meridian,
   ]
 }

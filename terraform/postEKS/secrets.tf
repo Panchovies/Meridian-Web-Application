@@ -6,14 +6,14 @@ data "aws_secretsmanager_secret" "meridian_api_keys" {
 ### Creates the namespace for the External Secrets Add-On ###
 resource "kubernetes_namespace" "external_secrets" {
   metadata {
-    name = "external-secrets"
+    name = var.secrets_manager_name
   }
 }
 
 ### Creates the ServiceAccount for the External Secrets Add-On ###
 resource "kubernetes_service_account" "external_secrets" {
   metadata {
-    name      = "external-secrets"
+    name      = var.secrets_manager_name
     namespace = kubernetes_namespace.external_secrets.metadata[0].name
   }
 
@@ -24,12 +24,12 @@ resource "kubernetes_service_account" "external_secrets" {
 
 ### Gets the helm release for the External Secrets Add-On ###
 resource "helm_release" "external_secrets" {
-  name             = "external-secrets"
+  name             = var.secrets_manager_name
   namespace        = kubernetes_namespace.external_secrets.metadata[0].name
   create_namespace = false
 
   repository = "https://charts.external-secrets.io"
-  chart      = "external-secrets"
+  chart      = var.secrets_manager_name
 
   values = [
     yamlencode({
