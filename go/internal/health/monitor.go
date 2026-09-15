@@ -1,6 +1,6 @@
 package health
 
-// Package health pings the Meridian /health endpoint.
+// Package health pings the Flask application /health endpoint.
 // From Boris' Repository: https://gitlab.com/mcm-delivery-service-26-08/boris_lipovetsky_palermo_w1
 // Design notes:
 //   - CheckOnce does one HTTP GET and returns a Result. It has no loops or

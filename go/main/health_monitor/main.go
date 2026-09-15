@@ -1,4 +1,4 @@
-// Command health-monitor pings the Meridian /health endpoint every 30 seconds.
+// Command health-monitor pings the Flask application /health endpoint every 30 seconds.
 // From Boris' Repository: https://gitlab.com/mcm-delivery-service-26-08/boris_lipovetsky_palermo_w1
 // Usage:
 //
