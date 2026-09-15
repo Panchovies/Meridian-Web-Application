@@ -494,8 +494,8 @@ your admin permissions.
 
 #### Creating With Terraform
 
-Run the `terraform-apply.sh` and `terraform-destroy.sh` scripts. More details in
-the
+Run the `bash_scripts/terraform-apply.sh` and
+`bash_scripts/terraform-destroy.sh` scripts. More details in the
 [README](https://gitlab.com/mcm-delivery-service-26-08/francisco_zenklusen_w1/-/blob/main/README.md)
 under the `Deploying With Terraform` section.
 
