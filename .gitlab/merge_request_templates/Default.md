@@ -13,8 +13,8 @@ Putting the DS key in the merge request TITLE as well is what lets GitLab and
 Jira close the ticket for you.
 -->
 
-`DS-___` —
-`https://meridian-capital-markets-delivery-services.atlassian.net/browse/DS-___`
+`DSFZ-___` —
+`https://meridian-capital-markets-delivery-services.atlassian.net/browse/DSFZ-___`
 
 ## Describe
 
@@ -65,7 +65,7 @@ Move one of the following names outside of the comment block:
 
 ---
 
-- [ ] This merge request links to its Jira work item (DS-___)
+- [ ] This merge request links to its Jira work item (DSFZ-___)
 - [ ] That Jira work item links back to this merge request
 - [ ] `ruff check .` passes
 - [ ] `mypy` passes
