@@ -494,8 +494,8 @@ your admin permissions.
 
 #### Creating With Terraform
 
-Run the `terraform-apply.sh` and `terraform-destroy.sh` scripts. More details in
-the
+Run the `bash_scripts/terraform-apply.sh` and
+`bash_scripts/terraform-destroy.sh` scripts. More details in the
 [README](https://gitlab.com/mcm-delivery-service-26-08/francisco_zenklusen_w1/-/blob/main/README.md)
 under the `Deploying With Terraform` section.
 
@@ -532,3 +532,24 @@ found from the planning stage.
   before that resource is created. To avoid this, make sure you know what each
   resource needs before being able to be created, and you can check the
   dependency chain before applying in `terraform plan`.
+
+### Go Scripts
+
+There are 3 operational scripts included in the `go/` directory:
+
+- **Metrics reader** — Reads the EKS cluster's CloudWatch metrics using the AWS
+  SDK for Go and prints a formatted summary of CPU utilization, memory
+  utilization, and pod restart counts for the last hour. Run it from the `go/`
+  directory with `go run ./main/metrics-reader` (needs valid AWS credentials and
+  region set). Expect a short printed summary of the three metrics, then the
+  program exits.
+- **Pipeline reporter** — Queries the GitLab API for the last 10 pipeline runs
+  in the group and prints their status, duration, and which stage failed where
+  one did. Run it with `go run ./main/pipeline-reporter` (needs a GitLab API
+  token and the group to query). Expect a printed list of the 10 runs with
+  status/duration/failed stage, then the program exits.
+- **Health monitor** — Hits the Flask app's `/health` endpoint every 30 seconds
+  and logs the response time and status code to a file. Run it with
+  `go run ./main/health-check` (needs the health endpoint URL). It runs
+  continuously rather than exiting, updating standard output every 30 seconds.
+  Stop it with `Ctrl+C`.

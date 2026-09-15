@@ -17,5 +17,21 @@ env/
 .ruff_cache/
 .mypy_cache/
 
+# Terraform
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/.terraform/
+terraform/terraform.tfvars
+terraform/backend.hcl
+terraform/tfplan
+terraform/backend_bootstrap/*.tfstate
+terraform/backend_bootstrap/*.tfstate.*
+terraform/backend_bootstrap/.terraform/
+terraform/backend_bootstrap/backend.hcl
+
+# Go tooling
+tools/bin/
+tools/*.log
+
 # Environment variables
 .env
