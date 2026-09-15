@@ -44,6 +44,10 @@ override.tf.json
 .terraformrc
 terraform.rc
 
+# Go tooling
+tools/bin/
+tools/*.log
+
 # Bash Scripts
 load_tester.sh
 cluster_runner.sh
