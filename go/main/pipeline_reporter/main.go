@@ -4,7 +4,7 @@
 //
 // Usage:
 //
-//	GITLAB_URL=https://gitlab.com GITLAB_PROJECT_ID=123 GITLAB_TOKEN=xxx go run ./main/pipeline-reporter
+//	GITLAB_URL=https://gitlab.com GITLAB_PROJECT_ID=123 GITLAB_TOKEN=xxx go run ./main/pipeline_reporter
 //
 // It ports scripts/ops/pipeline-summary.py (5 pipelines) to Go with limit 10.
 // The token is read from the environment and never printed.
