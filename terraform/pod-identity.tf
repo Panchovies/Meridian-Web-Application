@@ -10,7 +10,7 @@ resource "aws_eks_addon" "pod_identity_agent" {
 resource "aws_eks_pod_identity_association" "aws_load_balancer_controller" {
   cluster_name    = aws_eks_cluster.main.name
   namespace       = "kube-system"
-  service_account = kubernetes_service_account.aws_load_balancer_controller.metadata[0].name
+  service_account = var.ALB_name
   role_arn        = aws_iam_role.aws_load_balancer_controller.arn
 
   depends_on = [
@@ -37,12 +37,10 @@ resource "aws_eks_pod_identity_association" "cloudwatch_observability" {
 resource "aws_eks_pod_identity_association" "external_secrets" {
   cluster_name    = aws_eks_cluster.main.name
   namespace       = "external-secrets"
-  service_account = kubernetes_service_account.external_secrets.metadata[0].name
-
-  role_arn = aws_iam_role.external_secrets.arn
+  service_account = var.secrets_manager_name
+  role_arn        = aws_iam_role.external_secrets.arn
 
   depends_on = [
-    kubernetes_service_account.external_secrets,
     aws_iam_role_policy_attachment.external_secrets
   ]
 }

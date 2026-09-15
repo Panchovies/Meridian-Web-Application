@@ -1,3 +1,4 @@
+---
 default:
   tags:
     - cohort
@@ -31,15 +32,6 @@ workflow:
 
 checks:
   stage: checks
-  cache:
-    key:
-      files:
-        - requirements.txt
-        - requirements-dev.txt
-    paths:
-      - .cache/pip
-  variables:
-    PIP_CACHE_DIR: '$CI_PROJECT_DIR/.cache/pip'
   script:
     - pip install --quiet -r requirements.txt
     - pip install --quiet -r requirements-dev.txt
@@ -207,13 +199,6 @@ deploy:
     # AWS CLI does not need to be explicitly installed because the GitLab runner image already has it.
     - aws eks update-kubeconfig --region "$AWS_DEFAULT_REGION" --name
       "$EKS_CLUSTER_NAME"
-
-    # Checks if the cluster is active, fails if it isn't
-    - |
-      if ! kubectl cluster-info --request-timeout=10s > /dev/null 2>&1; then
-        echo "ERROR: Cannot reach EKS cluster '$EKS_CLUSTER_NAME'. Is it running? See RUNBOOK.md to start it before deploying."
-        exit 1
-      fi
 
   script:
     # Applies the manifests after setting the image variable

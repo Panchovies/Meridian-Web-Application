@@ -8,6 +8,16 @@ variable "aws_account_id" {
   type        = string
 }
 
+variable "admin_user_name" {
+  description = "Name of the IAM user to be created for admin access"
+  type        = string
+}
+
+variable "gitlab_ci_user_name" {
+  description = "Name of the IAM user to be created for GitLab CI access"
+  type        = string
+}
+
 variable "project_name" {
   description = "Short name used to prefix/tag resources"
   type        = string
@@ -15,6 +25,16 @@ variable "project_name" {
 
 variable "application_service_name" {
   description = "Kubernetes Service name for the application"
+  type        = string
+}
+
+variable "ALB_name" {
+  description = "Name of the ALB"
+  type        = string
+}
+
+variable "secrets_manager_name" {
+  description = "Name of the AWS Secrets Manager"
   type        = string
 }
 

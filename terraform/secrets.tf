@@ -6,25 +6,30 @@ data "aws_secretsmanager_secret" "meridian_api_keys" {
 ### Creates the namespace for the External Secrets Add-On ###
 resource "kubernetes_namespace" "external_secrets" {
   metadata {
-    name = "external-secrets"
+    name = var.secrets_manager_name
   }
+
+  depends_on = [
+    aws_eks_access_policy_association.terraform_admin,
+  ]
 }
 
 ### Creates the ServiceAccount for the External Secrets Add-On ###
 resource "kubernetes_service_account" "external_secrets" {
   metadata {
-    name      = "external-secrets"
+    name      = var.secrets_manager_name
     namespace = kubernetes_namespace.external_secrets.metadata[0].name
   }
 
   depends_on = [
-    kubernetes_namespace.external_secrets
+    kubernetes_namespace.external_secrets,
+    aws_eks_access_policy_association.terraform_admin,
   ]
 }
 
 ### Gets the helm release for the External Secrets Add-On ###
 resource "helm_release" "external_secrets" {
-  name             = "external-secrets"
+  name             = var.secrets_manager_name
   namespace        = kubernetes_namespace.external_secrets.metadata[0].name
   create_namespace = false
 
@@ -46,6 +51,7 @@ resource "helm_release" "external_secrets" {
     aws_eks_pod_identity_association.external_secrets,
     aws_eks_node_group.main,
     helm_release.aws_load_balancer_controller,
+    aws_eks_access_policy_association.terraform_admin,
   ]
 }
 
@@ -71,7 +77,8 @@ resource "kubectl_manifest" "aws_secrets_manager" {
   })
 
   depends_on = [
-    helm_release.external_secrets
+    helm_release.external_secrets,
+    aws_eks_access_policy_association.terraform_admin,
   ]
 }
 
@@ -112,6 +119,7 @@ resource "kubectl_manifest" "meridian_api_keys" {
   })
 
   depends_on = [
-    kubectl_manifest.aws_secrets_manager
+    kubectl_manifest.aws_secrets_manager,
+    aws_eks_access_policy_association.terraform_admin,
   ]
 }
