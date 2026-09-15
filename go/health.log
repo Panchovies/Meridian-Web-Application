@@ -1,0 +1,3 @@
+2026-09-15T15:50:22Z status=FAIL code=0 latency_ms=2 body="" err="Get \"http://localhost:8000/health\": dial tcp [::1]:8000: connect: connection refused"
+2026-09-15T15:51:33Z status=OK code=200 latency_ms=111 body="{\"message\":\"Service is healthy and running!\",\"status\":\"ok\",\"timestamp\":\"2026-09-15T15:51:33.844506+00:00\"}\n" err="-"
+2026-09-15T15:52:03Z status=OK code=200 latency_ms=19 body="{\"message\":\"Service is healthy and running!\",\"status\":\"ok\",\"timestamp\":\"2026-09-15T15:52:03.754458+00:00\"}\n" err="-"
