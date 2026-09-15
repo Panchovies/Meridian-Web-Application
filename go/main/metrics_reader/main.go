@@ -3,8 +3,8 @@
 //
 // Usage:
 //
-//	CLUSTER_NAME=meridian-cluster AWS_DEFAULT_REGION=us-east-1 go run ./cmd/metrics-reader
-//	DEBUG=1 go run ./cmd/metrics-reader   # prints SEARCH expressions + window
+//	CLUSTER_NAME=meridian-cluster AWS_DEFAULT_REGION=us-east-1 go run ./main/metrics-reader
+//	DEBUG=1 go run ./main/metrics-reader   # prints SEARCH expressions + window
 //
 // Why it looks this way:
 //   - main only reads env, builds the AWS client, and prints.
