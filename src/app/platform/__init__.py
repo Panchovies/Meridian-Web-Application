@@ -2,6 +2,7 @@
 """Platform API route registration."""
 from flask import Blueprint
 
-from . import alerts as alerts
-
 platform_bp = Blueprint("platform", __name__)
+
+# Blueprint must occur before the import, therefore E402 is ignored
+from . import alerts as alerts  # noqa: E402
