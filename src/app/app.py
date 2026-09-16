@@ -20,11 +20,15 @@ from .constants import (
     HTTP_STATUS_INTERNAL_SERVER_ERROR,
     HTTP_STATUS_OK,
 )
+from .platform import platform_bp
 
 app = Flask(__name__)
 
 # Adds metrics endpoint to the application for Prometheus monitoring
 metrics = PrometheusMetrics(app)
+
+# Register the platform blueprint
+app.register_blueprint(platform_bp)
 
 @app.route("/news")
 def get_news() -> tuple:
