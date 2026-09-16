@@ -1,3 +1,4 @@
+boto3-stubs==1.43.95
 mypy==2.3.0
 pip==26.2.1
 pip-audit==2.10.1
@@ -6,6 +7,7 @@ pytest==9.1.1
 python-gitlab==8.5.0
 ruff==0.16.1
 setuptools==83.0.0
+types-botocore==1.0.2
 types-colorama==0.4.15.20260508
 types-pysocks==1.7.1.20260518
 types-requests==2.33.0.20260712

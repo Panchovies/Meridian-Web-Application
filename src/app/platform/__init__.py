@@ -8,3 +8,4 @@ platform_bp = Blueprint("platform", __name__)
 from . import alerts as alerts  # noqa: E402
 from . import health as health  # noqa: E402
 from . import pipelines as pipelines  # noqa: E402
+from . import status as status  # noqa: E402
