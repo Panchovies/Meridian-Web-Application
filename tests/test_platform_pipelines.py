@@ -51,6 +51,7 @@ def test_platform_pipelines_success() -> None:
         "os.environ",
         {
             "GITLAB_API_URL": "https://gitlab.com/api/v4",
+            "GITLAB_PROJECT_ID": "12345",
             "GITLAB_TOKEN": "test-token",
         },
     ):
@@ -97,6 +98,7 @@ def test_platform_pipelines_gitlab_error() -> None:
         "os.environ",
         {
             "GITLAB_API_URL": "https://gitlab.com/api/v4",
+            "GITLAB_PROJECT_ID": "12345",
             "GITLAB_TOKEN": "test-token",
         },
     ), patch(
