@@ -7,6 +7,7 @@ import requests
 from flask import jsonify
 
 from app.constants import (
+    GITLAB_PROJECT_ID,
     HTTP_STATUS_INTERNAL_SERVER_ERROR,
     HTTP_STATUS_OK,
 )
@@ -28,7 +29,7 @@ def _duration(started_at: str, finished_at: str) -> float | None:
 def fetch_pipelines() -> tuple:
     """Fetch the last n pipelines."""
     url = os.getenv("GITLAB_API_URL", "https://gitlab.com/api/v4")
-    project_id = os.getenv("GITLAB_PROJECT_ID")
+    project_id = GITLAB_PROJECT_ID
     token = os.getenv("GITLAB_TOKEN")
     if not project_id or not token:
         return None, "GITLAB_PROJECT_ID and GITLAB_TOKEN are required"
