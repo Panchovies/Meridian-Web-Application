@@ -17,6 +17,7 @@ RUN rm -rf \
         /usr/local/bin/pip3*
 
 RUN adduser -D -u 1000 appuser
+RUN mkdir -p /app/logs && chown -R appuser:appuser /app
 USER appuser
 
 EXPOSE 5000
