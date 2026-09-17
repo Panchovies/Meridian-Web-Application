@@ -6,6 +6,7 @@ K8S_APP_DIR="k8s/app"
 AWS_REGION="us-east-1"
 ECR_REPO_NAME="terraform-meridian-web-application"
 DEPLOYMENT_NAME="meridian-web-application"
+CLUSTER_NAME="meridian-cluster"
 ROLLOUT_TIMEOUT="180s"
 
 # --- 1. Terraform: EKS cluster first, then the rest ---
@@ -35,13 +36,13 @@ docker buildx build \
 export MERIDIAN_IMAGE
 
 # --- 3. Apply the k8s manifests with the new image substituted in ---
-# Manifests should reference the image as ${MERIDIAN_IMAGE}; sed fills it in.
-# Use sed instead of using the actual variable since it is more commonly installed by default over envsubst.
-sed "s|\${MERIDIAN_IMAGE}|$MERIDIAN_IMAGE|g" "$K8S_APP_DIR/deployment.yaml"
+# Manifests should reference the image as ${MERIDIAN_IMAGE};
+# envsubst fills in the variable
+aws eks update-kubeconfig --name "$CLUSTER_NAME" --region us-east-1
 
-kubectl apply -f "$K8S_APP_DIR"
+kubectl apply -f k8s/app/configmap.yaml -f k8s/app/service.yaml -f k8s/app/hpa.yaml
+envsubst < k8s/app/deployment.yaml | kubectl apply -f -
 
 
 # --- 4. Wait for the workload to come up ---
 kubectl rollout status "deployment/${DEPLOYMENT_NAME}" --timeout="$ROLLOUT_TIMEOUT"
-kubectl get pods -l "app=${DEPLOYMENT_NAME}" -o wide
