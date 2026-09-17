@@ -237,7 +237,14 @@ everything from Terraform, the script will also build an image for amd64 (covers
 the case of using arm64 docker), then push to the newly created ECR, modify the
 deployment to use that newly pushed image, and apply the manifests.
 
-Docker Desktop must be running for the image build to work.
+**Note:** This is for a development purpose only, this should not be used as a
+way to put into production, as it does not go through the same tests on the
+pipeline that a normally deployed application would go through. Used purely to
+circumvent having to constantly protect branches while on admin credentials. Use
+this with that in mind.
+
+Docker Desktop must be running for the image build to work. You must also have
+`gettext` installed.
 
 Running `bash_scripts/terraform-destroy.sh` will destroy everything created by
 Terraform.
