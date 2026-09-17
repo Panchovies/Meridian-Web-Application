@@ -52,17 +52,17 @@ def platform_alerts() -> tuple:  # noqa: PLR0911 # This amount of returns are ne
                         f"Missing fields: {sorted(missing)}"}),
                 HTTP_STATUS_BAD_REQUEST)
 
-    if body["severity"] not in _ALLOWED_SEVERITIES:
-        return (jsonify({"status": "error", "message":
-                        "severity must be info, warning, or critical"}),
-                HTTP_STATUS_BAD_REQUEST)
-
     if not all(isinstance(body[field], str) and
                body[field].strip() for field in _REQUIRED_FIELDS):
         return (jsonify({"status": "error", "message":
                         "severity, message, and source "
                         "must be non-empty strings"}),
                 HTTP_STATUS_BAD_REQUEST)
+
+    if body["severity"] not in _ALLOWED_SEVERITIES:
+        return (jsonify({"status": "error", "message":
+                "severity must be info, warning, or critical"}),
+            HTTP_STATUS_BAD_REQUEST)
 
     if len(body["message"]) > _MAX_MESSAGE_LENGTH:
         return (jsonify({"status": "error", "message":

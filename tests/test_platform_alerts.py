@@ -49,6 +49,22 @@ def test_platform_alerts_success() -> None:
         mock_file().write.assert_called_once()
 
 
+def test_platform_alerts_non_string_severity() -> None:
+    """Test alert validation with non string severity value."""
+    response = app.test_client().post(
+        "/platform/alerts",
+        json={
+            "severity": {"level": "critical"},
+            "message": "Test alert",
+            "source": "test",
+        },
+    )
+
+    assert response.status_code == HTTP_STATUS_BAD_REQUEST
+    data = response.get_json()
+    assert data["status"] == "error"
+
+
 def test_platform_alerts_missing_fields() -> None:
     """Test alert validation with missing fields."""
     client = app.test_client()
