@@ -2,7 +2,6 @@
 set -e
 
 TF_DIR="terraform"
-K8S_APP_DIR="k8s/app"
 AWS_REGION="us-east-1"
 ECR_REPO_NAME="terraform-meridian-web-application"
 DEPLOYMENT_NAME="meridian-web-application"
@@ -38,7 +37,7 @@ export MERIDIAN_IMAGE
 # --- 3. Apply the k8s manifests with the new image substituted in ---
 # Manifests should reference the image as ${MERIDIAN_IMAGE};
 # envsubst fills in the variable
-aws eks update-kubeconfig --name "$CLUSTER_NAME" --region us-east-1
+aws eks update-kubeconfig --name "$CLUSTER_NAME" --region "$AWS_REGION"
 
 kubectl apply -f k8s/app/configmap.yaml -f k8s/app/service.yaml -f k8s/app/hpa.yaml
 envsubst < k8s/app/deployment.yaml | kubectl apply -f -
