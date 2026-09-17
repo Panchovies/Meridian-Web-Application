@@ -70,12 +70,13 @@ def platform_status() -> tuple:
     eks = _eks_status()
     cloudwatch_alarms = _cloudwatch_alarms()
 
+    has_active_alarms = bool(cloudwatch_alarms) if isinstance(cloudwatch_alarms,
+                                                              list) else True
     has_error = (
-        eks["status"] in {"unknown", "error"}
-        or (
-            isinstance(cloudwatch_alarms, dict)
-            and cloudwatch_alarms["status"] in {"unknown", "error"}
-        )
+        eks.get("status") != "ACTIVE"
+        or (isinstance(cloudwatch_alarms, dict) and
+            cloudwatch_alarms.get("status") in {"unknown", "error"})
+        or has_active_alarms
         or pipeline_error is not None
     )
 

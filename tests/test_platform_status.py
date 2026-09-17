@@ -26,12 +26,7 @@ def test_platform_status_success() -> None:
     mock_cloudwatch_client = Mock()
 
     mock_cloudwatch_client.describe_alarms.return_value = {
-        "MetricAlarms": [
-            {
-                "AlarmName": "meridian-HighPodCpuOverLimit",
-                "StateReason": "Threshold crossed",
-            },
-        ],
+        "MetricAlarms": [],
     }
 
     mock_pipelines = [
@@ -78,12 +73,7 @@ def test_platform_status_success() -> None:
         assert data["pipelines"][0]["id"] == 100  # noqa: PLR2004
         assert data["pipelines"][0]["status"] == "success"
 
-        assert len(data["cloudwatch_alarms"]) == 1
-
-        assert (
-            data["cloudwatch_alarms"][0]["name"]
-            == "meridian-HighPodCpuOverLimit"
-        )
+        assert len(data["cloudwatch_alarms"]) == 0
 
         mock_eks_client.describe_cluster.assert_called_once_with(
             name="meridian-cluster",
