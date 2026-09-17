@@ -448,6 +448,34 @@ repository, you may need to change the name to use your own AWS id number, since
 bucket names are static across AWS, so two buckets of the same name cannot
 exist, even on separate AWS accounts.
 
+#### AWS Secrets
+
+There are two secrets that need to be configured for the `/news` endpoint and
+the `/platform` endpoints. The first is the `NEWS_API_KEY`, which can be
+requested for free from [NewsAPI](https://newsapi.org/). The other is
+`GITLAB_TOKEN`, which the application needs to access the pipelines for some of
+the `/platform` endpoints. That token needs to be created by you and have the
+following scope:
+
+- CI/CD
+  - Job: Read
+  - Pipeline: Read
+- Projects
+  - Project: Read
+
+These tokens need to be stored in the AWS Secret Manager. You can create and add
+those secrets through AWS CLI:
+
+```bash
+aws secretsmanager create-secret \
+  --name meridian-api-keys  \
+  --description "API keys for Meridian app" \
+  --secret-string '{"GITLAB_TOKEN":<gitlab-token>,"NEWS_API_KEY":<news-api-key>}'
+```
+
+You can choose to change the name `meridian-api-keys` but make sure that any
+references to it in this repository change as well.
+
 #### `terraform apply/destroy` Permissions
 
 Your AWS user that `terraform` invokes must also have the correct permissions

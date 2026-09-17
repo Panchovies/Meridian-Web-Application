@@ -232,8 +232,21 @@ Thus, some parts need to be created by Terraform before other parts. There is a
 script `bash_scripts/terraform-apply.sh` provided that will create the cluster
 first then everything else. It needs intermittent approval on every apply. Use
 that to check if the correct resources are being built. Running from the root
-will create the entire cluster and all add-ons itself. Running
-`bash_scripts/terraform-destroy.sh` will destroy everything created by
+will create the entire cluster and all add-ons itself. After building up
+everything from Terraform, the script will also build an image for amd64 (covers
+the case of using arm64 docker), then push to the newly created ECR, modify the
+deployment to use that newly pushed image, and apply the manifests.
+
+**Note:** This is for a development purpose only, this should not be used as a
+way to put into production, as it does not go through the same tests on the
+pipeline that a normally deployed application would go through. Used purely to
+circumvent having to constantly protect branches while on admin credentials. Use
+this with that in mind.
+
+Docker Desktop must be running for the image build to work. You must also have
+`gettext` installed.
+
+Running `bash_scripts/terraform-destroy.sh` will destroy everything created by
 Terraform.
 
 Both of these will auto-approve, so it is recommended to run
