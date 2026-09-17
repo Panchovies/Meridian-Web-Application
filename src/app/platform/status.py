@@ -2,6 +2,7 @@
 """Combined platform status endpoint."""
 import logging
 import os
+from datetime import UTC, datetime
 
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError
@@ -117,9 +118,7 @@ def platform_status() -> tuple:
 
     return jsonify(
         {
-            "timestamp": __import__("datetime").datetime.now(
-                __import__("datetime").UTC,
-            ).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "platform_api": {
                 "status": "error" if has_error else "ok",
             },
