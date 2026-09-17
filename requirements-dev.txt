@@ -1,3 +1,4 @@
+boto3-stubs[eks,cloudwatch]==1.43.95
 mypy==2.3.0
 pip==26.2.1
 pip-audit==2.10.1

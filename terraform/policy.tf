@@ -278,6 +278,27 @@ resource "aws_iam_policy" "external_secrets" {
   })
 }
 
+### Policy for Platform API Status Endpoint ###
+resource "aws_iam_policy" "meridian_app_status" {
+  name = "Terraform-MeridianAppStatusPolicy"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["eks:DescribeCluster"]
+        Resource = "arn:aws:eks:${var.aws_region}:${var.aws_account_id}:cluster/${var.cluster_name}"
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["cloudwatch:DescribeAlarms"]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 ### KMS policy for S3 bucket encryption ###
 data "aws_iam_policy_document" "s3_kms" {
   statement {

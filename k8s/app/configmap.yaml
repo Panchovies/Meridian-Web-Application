@@ -6,3 +6,6 @@ metadata:
 data:
   PORT: '5000'
   ENVIRONMENT: 'production'
+  EKS_CLUSTER_NAME: 'meridian-cluster'
+  AWS_REGION: 'us-east-1'
+  GITLAB_PROJECT_ID: '85075367'

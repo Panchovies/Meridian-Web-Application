@@ -113,6 +113,14 @@ resource "kubectl_manifest" "meridian_api_keys" {
             key      = "meridian-api-keys"
             property = "NEWS_API_KEY"
           }
+        },
+        {
+          secretKey = "GITLAB_TOKEN"
+
+          remoteRef = {
+            key      = "meridian-api-keys"
+            property = "GITLAB_TOKEN"
+          }
         }
       ]
     }
