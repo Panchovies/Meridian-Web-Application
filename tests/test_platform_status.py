@@ -62,18 +62,16 @@ def test_platform_status_success() -> None:
         data = response.get_json()
 
         assert data["platform_api"]["status"] == "ok"
-
         assert data["eks"]["status"] == "ACTIVE"
         assert data["eks"]["name"] == "meridian-cluster"
         assert data["eks"]["version"] == "1.34"
-
         assert data["flask_application"]["status"] == "ok"
 
         # id is a test constant, does not need a variable
         assert data["pipelines"][0]["id"] == 100  # noqa: PLR2004
         assert data["pipelines"][0]["status"] == "success"
 
-        assert len(data["cloudwatch_alarms"]) == 0
+        assert data["cloudwatch_alarms"] == []
 
         mock_eks_client.describe_cluster.assert_called_once_with(
             name="meridian-cluster",
@@ -82,6 +80,68 @@ def test_platform_status_success() -> None:
         mock_cloudwatch_client.describe_alarms.assert_called_once_with(
             StateValue="ALARM",
         )
+
+
+def test_platform_status_unhealthy() -> None:
+    """Test unhealthy platform status."""
+    mock_eks_client = Mock()
+
+    mock_eks_client.describe_cluster.return_value = {
+        "cluster": {
+            "name": "meridian-cluster",
+            "status": "FAILED",
+            "version": "1.34",
+        },
+    }
+
+    mock_cloudwatch_client = Mock()
+
+    mock_cloudwatch_client.describe_alarms.return_value = {
+        "MetricAlarms": [
+            {
+                "AlarmName": "meridian-HighPodCpuOverLimit",
+                "StateReason": "Threshold crossed",
+            },
+        ],
+    }
+
+    mock_pipelines = [
+        {
+            "id": 100,
+            "status": "failed",
+            "duration_seconds": 300,
+        },
+    ]
+
+    with patch(
+        "src.app.platform.status.boto3.client",
+        side_effect=[
+            mock_eks_client,
+            mock_cloudwatch_client,
+        ],
+    ), patch(
+        "src.app.platform.status.fetch_pipelines",
+        return_value=(mock_pipelines, None),
+    ), patch.dict(
+        "os.environ",
+        {
+            "EKS_CLUSTER_NAME": "meridian-cluster",
+            "AWS_REGION": "us-east-1",
+        },
+    ):
+        client = app.test_client()
+
+        response = client.get("/platform/status")
+
+        assert response.status_code == HTTP_STATUS_INTERNAL_SERVER_ERROR
+
+        data = response.get_json()
+
+        assert data["platform_api"]["status"] == "error"
+        assert data["eks"]["status"] == "FAILED"
+        assert len(data["cloudwatch_alarms"]) == 1
+        assert data["pipelines"][0]["status"] == "failed"
+
 
 
 def test_platform_status_missing_eks_environment_variable() -> None:

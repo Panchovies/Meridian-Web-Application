@@ -64,20 +64,41 @@ def _cloudwatch_alarms() -> list | dict:
 
 
 @platform_bp.get("/platform/status")
+@platform_bp.get("/platform/status")
 def platform_status() -> tuple:
     """Return the status of the application."""
     pipelines, pipeline_error = fetch_pipelines()
     eks = _eks_status()
     cloudwatch_alarms = _cloudwatch_alarms()
 
-    has_active_alarms = bool(cloudwatch_alarms) if isinstance(cloudwatch_alarms,
-                                                              list) else True
-    has_error = (
-        eks.get("status") != "ACTIVE"
-        or (isinstance(cloudwatch_alarms, dict) and
-            cloudwatch_alarms.get("status") in {"unknown", "error"})
-        or has_active_alarms
+    has_fetch_error = (
+        eks["status"] in {"unknown", "error"}
+        or (
+            isinstance(cloudwatch_alarms, dict)
+            and cloudwatch_alarms["status"] in {"unknown", "error"}
+        )
         or pipeline_error is not None
+    )
+
+    eks_unhealthy = eks.get("status") != "ACTIVE"
+
+    alarms_firing = (
+        isinstance(cloudwatch_alarms, list)
+        and len(cloudwatch_alarms) > 0
+    )
+
+    pipeline_unhealthy = (
+        pipeline_error is None
+        and (
+            not pipelines
+            or pipelines[0].get("status") != "success"
+        )
+    )
+
+    has_error = has_fetch_error or (
+        eks_unhealthy
+        or alarms_firing
+        or pipeline_unhealthy
     )
 
     return jsonify(
