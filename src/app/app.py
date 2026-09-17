@@ -30,6 +30,9 @@ metrics = PrometheusMetrics(app)
 # Register the platform blueprint
 app.register_blueprint(platform_bp)
 
+# Create a max content length
+app.config["MAX_CONTENT_LENGTH"] = 8 * 1024
+
 @app.route("/news")
 def get_news() -> tuple:
     """Fetch news articles based on query parameters.
