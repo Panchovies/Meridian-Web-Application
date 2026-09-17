@@ -33,7 +33,6 @@ docker buildx build \
   .
 
 export MERIDIAN_IMAGE
-echo "Built and pushed: $MERIDIAN_IMAGE"
 
 # --- 3. Apply the k8s manifests with the new image substituted in ---
 # Manifests should reference the image as ${MERIDIAN_IMAGE}; sed fills it in.
