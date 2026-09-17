@@ -51,6 +51,7 @@ def test_platform_status_success() -> None:
         {
             "EKS_CLUSTER_NAME": "meridian-cluster",
             "AWS_REGION": "us-east-1",
+            "NEWS_API_KEY": "test-news-api-key",
         },
     ):
         client = app.test_client()

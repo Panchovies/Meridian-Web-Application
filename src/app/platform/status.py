@@ -5,9 +5,12 @@ import os
 
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError
-from flask import jsonify
+from flask import current_app, jsonify
 
-from app.constants import HTTP_STATUS_INTERNAL_SERVER_ERROR, HTTP_STATUS_OK
+from app.constants import (
+    HTTP_STATUS_INTERNAL_SERVER_ERROR,
+    HTTP_STATUS_OK,
+)
 
 from . import platform_bp
 from .pipelines import fetch_pipelines
@@ -73,14 +76,14 @@ def _cloudwatch_alarms() -> list | dict:
         logger.exception("Failed to fetch CloudWatch alarms")
         return {"status": "error", "message": "BotoCoreError"}
 
-
-@platform_bp.get("/platform/status")
 @platform_bp.get("/platform/status")
 def platform_status() -> tuple:
     """Return the status of the application."""
     pipelines, pipeline_error = fetch_pipelines()
     eks = _eks_status()
     cloudwatch_alarms = _cloudwatch_alarms()
+    health_response = current_app.test_client().get("/health")
+    health_data = health_response.get_json() or {}
 
     has_fetch_error = (
         eks["status"] in {"unknown", "error"}
@@ -122,7 +125,7 @@ def platform_status() -> tuple:
             },
             "eks": eks,
             "flask_application": {
-                "status": "ok",
+                "status": health_data.get("status", "error"),
             },
             "pipelines": (
                 pipelines
