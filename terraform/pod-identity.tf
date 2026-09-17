@@ -44,3 +44,14 @@ resource "aws_eks_pod_identity_association" "external_secrets" {
     aws_iam_role_policy_attachment.external_secrets
   ]
 }
+
+resource "aws_eks_pod_identity_association" "meridian_app_status" {
+  cluster_name    = aws_eks_cluster.main.name
+  namespace       = "default"
+  service_account = kubernetes_service_account.meridian_app_status.metadata[0].name
+  role_arn        = aws_iam_role.meridian_app_status.arn
+
+  depends_on = [
+    aws_iam_role_policy_attachment.meridian_app_status
+  ]
+}

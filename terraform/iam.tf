@@ -140,3 +140,31 @@ resource "aws_iam_role_policy_attachment" "external_secrets" {
   role       = aws_iam_role.external_secrets.name
   policy_arn = aws_iam_policy.external_secrets.arn
 }
+
+### IAM role for Platform API Status Endpoint ###
+resource "aws_iam_role" "meridian_app_status" {
+  name = "meridian-web-application"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+
+        Principal = {
+          Service = "pods.eks.amazonaws.com"
+        }
+
+        Action = [
+          "sts:AssumeRole",
+          "sts:TagSession"
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "meridian_app_status" {
+  role       = aws_iam_role.meridian_app_status.name
+  policy_arn = aws_iam_policy.meridian_app_status.arn
+}
