@@ -225,7 +225,7 @@ def test_platform_status_eks_client_error() -> None:
 
         assert data["platform_api"]["status"] == "error"
         assert data["eks"]["status"] == "error"
-        assert "EKS unavailable" in data["eks"]["message"]
+        assert data["eks"]["message"] == "ServiceUnavailable"
 
 
 def test_platform_status_cloudwatch_client_error() -> None:
@@ -278,6 +278,4 @@ def test_platform_status_cloudwatch_client_error() -> None:
 
         assert data["platform_api"]["status"] == "error"
         assert data["cloudwatch_alarms"]["status"] == "error"
-        assert "CloudWatch unavailable" in (
-            data["cloudwatch_alarms"]["message"]
-        )
+        assert data["cloudwatch_alarms"]["message"] == "ServiceUnavailable"

@@ -1,5 +1,6 @@
 # Copyright (c) 2026 Meridian Capital Markets
 """Combined platform status endpoint."""
+import logging
 import os
 
 import boto3
@@ -10,6 +11,8 @@ from app.constants import HTTP_STATUS_INTERNAL_SERVER_ERROR, HTTP_STATUS_OK
 
 from . import platform_bp
 from .pipelines import fetch_pipelines
+
+logger = logging.getLogger(__name__)
 
 
 def _eks_status() -> dict:
@@ -36,8 +39,12 @@ def _eks_status() -> dict:
             "name": cluster.get("name"),
             "version": cluster.get("version"),
         }
-    except (BotoCoreError, ClientError) as exc:
-        return {"status": "error", "message": str(exc)}
+    except ClientError as exc:
+        logger.exception("Failed to fetch EKS cluster status")
+        return {"status": "error", "message": exc.response["Error"]["Code"]}
+    except BotoCoreError:
+        logger.exception("Failed to fetch EKS cluster status")
+        return {"status": "error", "message": "BotoCoreError"}
 
 
 def _cloudwatch_alarms() -> list | dict:
@@ -59,8 +66,12 @@ def _cloudwatch_alarms() -> list | dict:
             }
             for alarm in response.get("MetricAlarms", [])
         ]
-    except (BotoCoreError, ClientError) as exc:
-        return {"status": "error", "message": str(exc)}
+    except ClientError as exc:
+        logger.exception("Failed to fetch CloudWatch alarms")
+        return {"status": "error", "message": exc.response["Error"]["Code"]}
+    except BotoCoreError:
+        logger.exception("Failed to fetch CloudWatch alarms")
+        return {"status": "error", "message": "BotoCoreError"}
 
 
 @platform_bp.get("/platform/status")
