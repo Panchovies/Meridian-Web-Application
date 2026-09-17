@@ -63,6 +63,21 @@ Example response:
 ]
 ```
 
+### Platform endpoints
+
+The platform endpoints provide operational health, pipeline, status, and alert
+information:
+
+- `GET /platform/health` — checks platform API health. Requires `GITLAB_TOKEN`.
+- `GET /platform/pipelines` — returns recent GitLab pipeline information.
+  Requires the GitLab configuration and token.
+- `GET /platform/status` — combines EKS, CloudWatch alarm, pipeline, and
+  application health information. Requires `AWS_REGION`, `EKS_CLUSTER_NAME`, and
+  the relevant AWS and GitLab credentials.
+- `POST /platform/alerts` — accepts an alert for platform logging. The JSON
+  request body must include non-empty `severity`, `message`, and `source`
+  fields. Valid severity values are `info`, `warning`, and `critical`.
+
 ## Requirements
 
 - Python 3.14 (or any Python 3.x)
