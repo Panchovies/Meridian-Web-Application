@@ -20,6 +20,8 @@ variables:
 workflow:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    # Any non-pipeline job will be marked with "never" on schedules
+    - if: $CI_PIPELINE_SOURCE == "schedule"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
 .application_changes:
@@ -32,6 +34,11 @@ workflow:
 
 checks:
   stage: checks
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   script:
     - pip install --quiet -r requirements.txt
     - pip install --quiet -r requirements-dev.txt
@@ -68,10 +75,18 @@ checks:
           || echo "WARNING: history has non-conforming commits. Not failing the pipeline yet."
       fi
 
+health-check:
+  stage: checks
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $SCHEDULED_JOB == "health"
+  script: ./bash_scripts/health-check.sh
+
 # Only runs the terraform fmt and validate commands. Does not require backend or protected CI variables.
 terraform-fmt-validate:
   stage: terraform
   rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   script:
@@ -84,6 +99,8 @@ terraform-fmt-validate:
 terraform-plan:
   stage: terraform
   rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
     - if:
         '$CI_PIPELINE_SOURCE == "merge_request_event" &&
@@ -93,6 +110,25 @@ terraform-plan:
     - terraform init -input=false
     - terraform validate
     - terraform plan -input=false -lock-timeout=5m
+
+# Part of a scheduled weekly pipeline; Checks for terraform drift
+terraform-drift:
+  stage: terraform
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $SCHEDULED_JOB == "drift"
+  script:
+    - apk add --no-cache aws-cli
+    - terraform -chdir=terraform init -input=false
+    - |
+      CODE=0
+      terraform -chdir=terraform plan -detailed-exitcode -lock=false \
+        -input=false -no-color || CODE=$?
+      case "$CODE" in
+        0) echo "no drift" ;;
+        2) echo "DRIFT, the plan above shows what changed" ;;
+        *) echo "terraform plan failed (exit $CODE)" ;;
+      esac
+      exit "$CODE"
 
 # Builds the Docker image. Then composes the image into an artifact
 build:
@@ -106,6 +142,8 @@ build:
   # Only rebuild when application code, dockerfile, or manifest change on default branch.
   # Build always when in a merge request for scanning purposes.
   rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       changes: !reference [.application_changes, changes]
@@ -126,6 +164,8 @@ trivy:
     name: aquasec/trivy:0.74.0
     entrypoint: ['']
   rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
     # Only scan when application code, dockerfile, or manifest change on default branch.
     # Scan always when in a merge request.
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
@@ -143,6 +183,8 @@ push:
   services:
     - docker:29.7.2-dind
   rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
     # Only push when application code, dockerfile, or manifest change on default branch.
     # Push manually when in a merge request on a protected branch.
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
@@ -175,6 +217,8 @@ deploy:
       optional: true
   image: ci-tools:latest
   rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
     # Only deploy when application code, dockerfile, or manifest change on default branch.
     # Deploy automatically when in a merge request on a protected branch and push has been run.
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
@@ -216,6 +260,8 @@ smoke:
   needs: ['deploy']
   image: ci-tools:latest
   rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
     # Only smoke when application code, dockerfile, or manifest change on default branch.
     # Smoke automatically when in a merge request on a protected branch
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
