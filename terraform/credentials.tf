@@ -6,6 +6,6 @@ resource "kubernetes_service_account" "meridian_app_status" {
   }
   depends_on = [
     aws_eks_addon.pod_identity_agent,
-    aws_eks_access_policy_association.terraform_admin,
+    time_sleep.terraform_admin_propagation,
   ]
 }
