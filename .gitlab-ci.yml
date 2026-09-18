@@ -75,6 +75,12 @@ checks:
           || echo "WARNING: history has non-conforming commits. Not failing the pipeline yet."
       fi
 
+health-check:
+  stage: checks
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $SCHEDULED_JOB == "health"
+  script: ./bash_scripts/health-check.sh
+
 # Only runs the terraform fmt and validate commands. Does not require backend or protected CI variables.
 terraform-fmt-validate:
   stage: terraform
