@@ -8,6 +8,8 @@ DEPLOYMENT_NAME="meridian-web-application"
 CLUSTER_NAME="meridian-cluster"
 ROLLOUT_TIMEOUT="180s"
 
+terraform -chdir="$TF_DIR" init
+
 # --- 1. Terraform: EKS cluster first, then the rest ---
 terraform -chdir="$TF_DIR" apply -target=aws_eks_cluster.main
 

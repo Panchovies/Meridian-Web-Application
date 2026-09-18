@@ -10,7 +10,7 @@ resource "kubernetes_namespace" "external_secrets" {
   }
 
   depends_on = [
-    aws_eks_access_policy_association.terraform_admin,
+    time_sleep.terraform_admin_propagation,
   ]
 }
 
@@ -23,7 +23,7 @@ resource "kubernetes_service_account" "external_secrets" {
 
   depends_on = [
     kubernetes_namespace.external_secrets,
-    aws_eks_access_policy_association.terraform_admin,
+    time_sleep.terraform_admin_propagation,
   ]
 }
 
@@ -51,7 +51,7 @@ resource "helm_release" "external_secrets" {
     aws_eks_pod_identity_association.external_secrets,
     aws_eks_node_group.main,
     helm_release.aws_load_balancer_controller,
-    aws_eks_access_policy_association.terraform_admin,
+    time_sleep.terraform_admin_propagation,
   ]
 }
 
@@ -78,7 +78,7 @@ resource "kubectl_manifest" "aws_secrets_manager" {
 
   depends_on = [
     helm_release.external_secrets,
-    aws_eks_access_policy_association.terraform_admin,
+    time_sleep.terraform_admin_propagation,
   ]
 }
 
@@ -128,6 +128,6 @@ resource "kubectl_manifest" "meridian_api_keys" {
 
   depends_on = [
     kubectl_manifest.aws_secrets_manager,
-    aws_eks_access_policy_association.terraform_admin,
+    time_sleep.terraform_admin_propagation,
   ]
 }
