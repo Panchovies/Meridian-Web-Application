@@ -11,6 +11,7 @@ stages:
   - push
   - deploy
   - smoke
+  - report
 
 variables:
   # gitleaks scans history and commitlint needs the merge-request commit range;
@@ -274,3 +275,91 @@ smoke:
 
       echo "ERROR: /news did not return HTTP 200 after 30 attempts."
       exit 1
+
+# Where the platform API and the application answer, printed as
+# PLATFORM_URL=... and APP_URL=... and kept as a dotenv artifact, once
+# the deploy has succeeded. The status board reads them from here, so
+# neither has to be typed in by hand. Allowed to fail -- and it does,
+# loudly, until the platform API is deployed behind a public address --
+# so it can never hold up a deploy.
+platform-url:
+  stage: report
+  image: ci-tools:latest
+  needs: ['deploy']
+  allow_failure: true
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes: !reference [.application_changes, changes]
+    - if:
+        '$CI_PIPELINE_SOURCE == "merge_request_event" &&
+        $CI_MERGE_REQUEST_SOURCE_BRANCH_PROTECTED == "true"'
+  variables:
+    PLATFORM_SERVICE: platform-api
+    APP_ALB_NAME: meridian-web-application-alb
+  before_script:
+    - apt-get update
+    - apt-get install -y curl
+    - rm -rf /var/lib/apt/lists/*
+    - KUBECTL_VERSION="v1.34.0"
+    - curl -LO
+      "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl"
+    - install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+    - aws eks update-kubeconfig --region "$AWS_DEFAULT_REGION" --name
+      "$EKS_CLUSTER_NAME"
+  script:
+    - |
+      # resolve <what> <service> <alb-name> <fixed-url>: print one public URL, or
+      # nothing, saying on stderr why there is nothing.
+      resolve() {
+        if [ -n "$4" ] && [ "$4" != "http://" ] && [ "$4" != "https://" ]; then
+          printf '%s\n' "${4%/}"
+          return
+        fi
+        if [ -n "$3" ]; then
+          host=$(aws elbv2 describe-load-balancers --names "$3" \
+            --query 'LoadBalancers[0].DNSName' --output text 2>/dev/null || true)
+          case "$host" in
+            ''|None) echo "$1: no load balancer named $3 was found." >&2 ;;
+            *) printf 'http://%s\n' "$host" ;;
+          esac
+          return
+        fi
+        if [ -z "$2" ]; then
+          echo "$1: nothing named to look for." >&2
+          return
+        fi
+        type=$(kubectl get service "$2" -o jsonpath='{.spec.type}' 2>/dev/null || true)
+        if [ -z "$type" ]; then
+          echo "$1: service $2 is not in the cluster, so it is not deployed yet." >&2
+          return
+        fi
+        if [ "$type" != "LoadBalancer" ]; then
+          echo "$1: service $2 is $type, so it has no public address." >&2
+          echo "$1: give it type: LoadBalancer, or put it behind an ALB and name that." >&2
+          return
+        fi
+        host=""
+        for i in $(seq 1 30); do
+          host=$(kubectl get service "$2" -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+          [ -n "$host" ] && break
+          echo "$1: waiting for the load balancer hostname ($i/30)" >&2
+          sleep 10
+        done
+        port=$(kubectl get service "$2" -o jsonpath='{.spec.ports[0].port}')
+        [ "$port" = "80" ] && port=""
+        [ -n "$host" ] && printf 'http://%s%s\n' "$host" "${port:+:$port}"
+      }
+      platform=$(resolve "platform API" "${PLATFORM_SERVICE:-}" "${PLATFORM_ALB_NAME:-}" "")
+      app=$(resolve "application" "${APP_SERVICE:-}" "${APP_ALB_NAME:-}" "${APP_URL:-}")
+      {
+        echo "PLATFORM_URL=$platform"
+        echo "APP_URL=$app"
+      } | tee platform-url.env
+      test -n "$platform"
+  artifacts:
+    when: always
+    paths:
+      - platform-url.env
+    reports:
+      dotenv: platform-url.env
+    expire_in: 30 days
